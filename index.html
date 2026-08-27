@@ -1,0 +1,2089 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Explore the FACT Lab 2008A seating directory in interactive 2D and 3D views.">
+<meta name="theme-color" content="#051d34">
+<meta property="og:type" content="website">
+<meta property="og:title" content="FACT Lab 2008A Seating Directory">
+<meta property="og:description" content="Explore the FACT Lab seating layout and member directory in interactive 2D and 3D views.">
+<meta property="og:url" content="https://m-ethereal.github.io/fact-lab-seating-directory/">
+<title>FACT Lab 2008A Seating Directory</title>
+<link rel="canonical" href="https://m-ethereal.github.io/fact-lab-seating-directory/">
+<link rel="icon" type="image/svg+xml" href="./assets/images/fact-lab-mark.svg">
+<style>
+  :root { color-scheme: dark; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+  html, body { min-height: 100%; margin: 0; background: #14191c; }
+  #fact-lab-calibrator { position: relative; width: 100%; min-height: 680px; overflow: hidden; background: #14191c; color: #edf2f4; }
+  #fact-lab-canvas { display: block; width: 100%; height: 680px; }
+  #fact-lab-controls { position: absolute; inset: 14px auto auto 14px; z-index: 3; display: grid; gap: 10px; width: min(320px, calc(100% - 28px)); padding: 12px; border: 1px solid rgba(235,244,247,.18); border-radius: 7px; background: rgba(20,25,28,.92); backdrop-filter: blur(10px); }
+  #fact-lab-controls h1 { margin: 0; font-size: 15px; font-weight: 500; letter-spacing: 0; }
+  #fact-lab-controls p { margin: 0; color: #b2bec3; font-size: 12px; line-height: 1.4; }
+  .fact-view-modes { position: relative; display: grid; grid-template-columns: 1fr 1fr; padding: 3px; border: 1px solid rgba(235,244,247,.2); border-radius: 999px; background: rgba(255,255,255,.045); isolation: isolate; }
+  .fact-view-modes::before { position: absolute; inset: 3px auto 3px 3px; z-index: -1; width: calc(50% - 3px); border-radius: 999px; background: #e4a853; box-shadow: 0 2px 7px rgba(0,0,0,.2); content: ""; transition: transform 180ms cubic-bezier(.22,.61,.36,1); }
+  #fact-lab-calibrator[data-view="3d"] .fact-view-modes::before { transform: translateX(100%); }
+  .fact-view-modes button { position: relative; min-height: 30px; padding: 0 12px; border: 0; border-radius: 999px; background: transparent; color: #bac7cc; font: inherit; font-size: 12px; font-weight: 650; cursor: pointer; transition: color 160ms ease; }
+  .fact-view-modes button[aria-pressed="true"] { color: #171b1d; }
+  .fact-view-modes button:focus-visible { outline: 2px solid #f5fbfb; outline-offset: 3px; }
+  .fact-language-modes { display: none; grid-template-columns: 1fr 1fr; padding: 3px; border: 1px solid rgba(235,244,247,.18); border-radius: 999px; background: rgba(255,255,255,.035); }
+  .fact-language-modes button { min-height: 30px; padding: 0 10px; border: 0; border-radius: 999px; background: transparent; color: #8fa5b4; font: inherit; font-size: 10px; font-weight: 720; cursor: pointer; }
+  .fact-language-modes button[aria-pressed="true"] { background: rgba(231,241,246,.12); color: #f4f8fa; }
+  .fact-language-modes button:focus-visible { outline: 2px solid #f5fbfb; outline-offset: 3px; }
+  .fact-toggles { display: grid; grid-template-columns: 1fr 1fr; gap: 7px 12px; }
+  .fact-toggles label { display: flex; align-items: center; gap: 7px; color: #d2dade; font-size: 12px; }
+  .fact-toggles input { accent-color: #e4a853; }
+  #fact-lab-status { position: absolute; right: 14px; bottom: 14px; z-index: 3; max-width: min(500px, calc(100% - 28px)); padding: 8px 10px; border-radius: 5px; background: rgba(20,25,28,.88); color: #c4cdd1; font-size: 11px; line-height: 1.4; }
+  #fact-lab-legend { display: flex; flex-wrap: wrap; gap: 10px; color: #b2bec3; font-size: 11px; }
+  #fact-lab-legend span { display: inline-flex; align-items: center; gap: 5px; }
+  #fact-lab-legend i { display: inline-block; width: 18px; height: 3px; }
+  #fact-lab-legend .plan { background: #8a8f92; }
+  #fact-lab-legend .model { background: #ee9f37; }
+  #fact-lab-legend .axis { background: #57b5a7; }
+  #fact-lab-legend .seat { background: #56d6c2; }
+  .fact-brand { display: none; min-width: 0; align-items: center; color: inherit; text-decoration: none; }
+  .fact-brand-logo { display: block; width: clamp(245px, 20vw, 286px); height: 38px; object-fit: contain; object-position: left center; }
+  .fact-role-legend { display: none; flex-wrap: wrap; align-items: center; justify-content: flex-start; gap: 4px; color: #b8c7d1; font-size: 9px; line-height: 1.2; }
+  .fact-role-legend button { display: inline-flex; min-height: 26px; align-items: center; gap: 7px; padding: 0 9px; border: 1px solid transparent; border-radius: 4px; background: transparent; color: inherit; font: inherit; cursor: pointer; white-space: nowrap; transition: border-color 140ms ease, background 140ms ease, color 140ms ease, opacity 140ms ease; }
+  .fact-role-legend button:hover,
+  .fact-role-legend button[aria-pressed="true"] { border-color: color-mix(in srgb, var(--role-color) 72%, transparent); background: color-mix(in srgb, var(--role-color) 13%, transparent); color: #f5f9fb; }
+  .fact-role-legend button:focus-visible { outline: 2px solid #f5fbfb; outline-offset: 2px; }
+  .fact-role-legend[data-filter-active="true"] button:not([data-role-current="true"]) { opacity: .46; }
+  .fact-role-legend .legend-title { margin-right: 5px; color: #718b9d; font-size: 8px; font-weight: 760; text-transform: uppercase; white-space: nowrap; }
+  .fact-role-legend i { display: block; width: 7px; height: 7px; border-radius: 50%; background: var(--role-color); box-shadow: 0 0 0 2px color-mix(in srgb, var(--role-color) 16%, transparent); }
+  .fact-role-legend b { font-weight: 570; }
+  .fact-role-legend .faculty { --role-color: #d4a540; }
+  .fact-role-legend .postdoc { --role-color: #4d9fd1; }
+  .fact-role-legend .phd { --role-color: #35ad9b; }
+  .fact-role-legend .incoming { --role-color: #df765e; }
+  .fact-role-legend .visitor { --role-color: #907bd2; }
+  .fact-role-legend .vacant { --role-color: #8999a5; }
+  #fact-workstation-markers { position: absolute; inset: 0; z-index: 2; overflow: hidden; pointer-events: none; }
+  .fact-workstation-marker { position: absolute; display: grid; justify-items: center; width: 68px; height: 64px; padding: 0; border: 0; background: transparent; color: #f4f7f7; font: inherit; pointer-events: auto; cursor: pointer; transform: translate(-50%, -50%); transform-origin: center; transition: filter 160ms ease, opacity 160ms ease, transform 160ms ease; }
+  .fact-workstation-marker[hidden] { display: none; }
+  .fact-workstation-marker:hover, .fact-workstation-marker[data-active="true"] { z-index: 3; filter: drop-shadow(0 4px 7px rgba(0,0,0,.42)); transform: translate(-50%, -50%) scale(1.12); }
+  .fact-workstation-marker[data-selected="true"] .fact-marker-photo { box-shadow: 0 0 0 3px rgba(245,248,251,.95), 0 0 0 6px color-mix(in srgb, var(--role-color, #35ad9b) 72%, transparent); }
+  .fact-workstation-marker[data-role-match="false"] { opacity: .18; filter: grayscale(.75) saturate(.5); transform: translate(-50%, -50%) scale(.9); }
+  .fact-workstation-marker[data-role-match="true"] { z-index: 2; filter: drop-shadow(0 0 9px color-mix(in srgb, var(--role-color, #35ad9b) 78%, transparent)); transform: translate(-50%, -50%) scale(1.14); }
+  .fact-workstation-marker[data-selected="true"][data-role-match="false"] { z-index: 3; opacity: .72; filter: none; transform: translate(-50%, -50%) scale(1.06); }
+  .fact-workstation-marker[data-role-match="true"]:hover,
+  .fact-workstation-marker[data-role-match="true"][data-active="true"] { transform: translate(-50%, -50%) scale(1.22); }
+  .fact-workstation-marker:focus { outline: none; }
+  .fact-workstation-marker:focus-visible .fact-marker-photo { outline: 2px solid #f4fffd; outline-offset: 3px; }
+  .fact-marker-photo { position: relative; display: grid; width: 38px; height: 38px; overflow: hidden; place-items: center; border: 2px solid var(--role-color, #35ad9b); border-radius: 50%; background: #263033; box-shadow: 0 0 0 2px rgba(7,25,43,.78); color: #dfe8e9; font-size: 14px; font-weight: 700; }
+  .fact-marker-photo img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: center top; }
+  .fact-marker-photo img[hidden], .fact-marker-fallback[hidden] { display: none; }
+  .fact-marker-id { position: absolute; top: -3px; right: 8px; display: grid; width: 18px; height: 18px; place-items: center; border: 1px solid rgba(255,255,255,.35); border-radius: 50%; background: #172023; color: #dffbf6; font-size: 8px; font-weight: 750; line-height: 1; }
+  .fact-marker-name { max-width: 68px; overflow: hidden; color: #f5f8f8; font-size: 10px; font-weight: 650; line-height: 16px; text-overflow: ellipsis; text-shadow: 0 1px 3px #111, 0 0 4px #111; white-space: nowrap; }
+  .fact-workstation-marker[data-status="faculty"] { --role-color: #d4a540; }
+  .fact-workstation-marker[data-status="postdoc"] { --role-color: #4d9fd1; }
+  .fact-workstation-marker[data-status="phd"] { --role-color: #35ad9b; }
+  .fact-workstation-marker[data-status="incoming"] { --role-color: #df765e; }
+  .fact-workstation-marker[data-status="visitor"] { --role-color: #907bd2; }
+  .fact-workstation-marker[data-status="member"] { --role-color: #8ba2b4; }
+  .fact-workstation-marker[data-status="vacant"] { --role-color: #8999a5; opacity: .72; }
+  .fact-workstation-marker[data-status="vacant"] .fact-marker-photo { border-style: dashed; border-color: #a5afb2; background: rgba(38,48,51,.7); color: #c1c9cb; font-size: 10px; }
+  #fact-workstation-tooltip { position: absolute; z-index: 4; display: grid; grid-template-columns: 68px minmax(0, 1fr); gap: 11px; width: 252px; padding: 10px; border: 1px solid color-mix(in srgb, var(--role-color, #35ad9b) 62%, transparent); border-radius: 5px; background: rgba(7,25,43,.97); box-shadow: 0 8px 24px rgba(0,0,0,.3); pointer-events: none; }
+  #fact-workstation-tooltip[hidden] { display: none; }
+  .fact-person-photo { position: relative; width: 68px; height: 82px; overflow: hidden; border: 1px solid rgba(235,244,247,.16); border-radius: 4px; background: #2b3438; }
+  .fact-person-photo img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: center top; }
+  .fact-person-photo img[hidden] { display: none; }
+  .fact-person-photo span { display: grid; width: 100%; height: 100%; place-items: center; color: #94a3a8; font-size: 22px; }
+  .fact-person-photo span[hidden] { display: none; }
+  .fact-person-details { display: grid; align-content: center; min-width: 0; }
+  .fact-person-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+  #fact-workstation-name { overflow: hidden; color: #f2f6f7; font-size: 15px; font-weight: 650; letter-spacing: 0; text-overflow: ellipsis; white-space: nowrap; }
+  #fact-workstation-id { flex: none; color: #79ead8; font-size: 12px; font-weight: 650; letter-spacing: 0; }
+  #fact-workstation-english { min-height: 16px; margin-top: 1px; overflow: hidden; color: #bdc8cc; font-size: 11px; line-height: 1.35; text-overflow: ellipsis; white-space: nowrap; }
+  #fact-workstation-role { margin-top: 4px; color: var(--role-color, #68d5cb); font-size: 11px; font-weight: 650; line-height: 1.3; }
+  #fact-workstation-meta { margin-top: 3px; color: #9eaaae; font-size: 10px; line-height: 1.3; }
+  #fact-workstation-tooltip[data-status="faculty"] { --role-color: #d4a540; }
+  #fact-workstation-tooltip[data-status="postdoc"] { --role-color: #4d9fd1; }
+  #fact-workstation-tooltip[data-status="phd"] { --role-color: #35ad9b; }
+  #fact-workstation-tooltip[data-status="incoming"] { --role-color: #df765e; }
+  #fact-workstation-tooltip[data-status="visitor"] { --role-color: #907bd2; }
+  #fact-workstation-tooltip[data-status="vacant"] { --role-color: #8999a5; }
+  #fact-workstation-tooltip[data-status="member"] { --role-color: #8ba2b4; }
+  #fact-workstation-english[hidden], #fact-workstation-role[hidden] { display: none; }
+  #fact-person-panel { position: absolute; inset: auto 0 0; z-index: 5; display: grid; grid-template-columns: 110px minmax(360px, 1.35fr) minmax(280px, .75fr); min-height: 164px; align-items: center; gap: 24px; padding: 20px 64px 20px 28px; border-top: 1px solid color-mix(in srgb, var(--role-color, #35ad9b) 68%, transparent); background: rgba(5,25,43,.975); box-shadow: 0 -16px 42px rgba(0,0,0,.3); backdrop-filter: blur(18px); }
+  #fact-person-panel[hidden] { display: none; }
+  #fact-person-panel[data-status="faculty"] { --role-color: #d4a540; }
+  #fact-person-panel[data-status="postdoc"] { --role-color: #4d9fd1; }
+  #fact-person-panel[data-status="phd"] { --role-color: #35ad9b; }
+  #fact-person-panel[data-status="incoming"] { --role-color: #df765e; }
+  #fact-person-panel[data-status="visitor"] { --role-color: #907bd2; }
+  #fact-person-panel[data-status="vacant"] { --role-color: #8999a5; }
+  #fact-person-panel[data-status="member"] { --role-color: #8ba2b4; }
+  .fact-detail-photo { display: grid; width: 104px; height: 104px; overflow: hidden; place-items: center; border: 3px solid color-mix(in srgb, var(--role-color, #35ad9b) 76%, #f4f7f8); border-radius: 50%; background: #172b3a; box-shadow: 0 0 0 5px rgba(255,255,255,.045); color: #9aabb7; font-size: 28px; font-weight: 650; }
+  .fact-detail-photo img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: center top; }
+  .fact-detail-photo img[hidden], .fact-detail-photo span[hidden] { display: none; }
+  .fact-detail-identity { display: grid; min-width: 0; align-content: center; }
+  .fact-detail-kicker { margin-bottom: 5px; color: var(--role-color, #68d5cb); font-size: 9px; font-weight: 750; letter-spacing: 0; text-transform: uppercase; }
+  .fact-detail-heading { display: flex; min-width: 0; align-items: baseline; gap: 10px; }
+  #fact-detail-name { color: #f7f9fb; font-size: 24px; font-weight: 690; }
+  #fact-detail-english { overflow: hidden; color: #aebfcb; font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
+  #fact-detail-role { margin-top: 3px; color: #dce6ec; font-size: 13px; font-weight: 650; }
+  #fact-detail-bio { display: -webkit-box; max-width: 760px; margin: 8px 0 0; overflow: hidden; color: #aebcc6; font-size: 11px; line-height: 1.5; -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
+  #fact-detail-note { margin: 5px 0 0; color: #d5aa59; font-size: 10px; line-height: 1.4; }
+  #fact-detail-bio[hidden], #fact-detail-note[hidden], #fact-detail-english[hidden] { display: none; }
+  .fact-detail-meta { display: grid; gap: 12px; padding-left: 22px; border-left: 1px solid rgba(202,220,231,.15); }
+  .fact-detail-facts { display: grid; grid-template-columns: repeat(2, minmax(88px, 1fr)); gap: 10px 18px; margin: 0; }
+  .fact-detail-facts div { display: grid; gap: 3px; }
+  .fact-detail-facts dt { color: #718c9e; font-size: 9px; font-weight: 700; text-transform: uppercase; }
+  .fact-detail-facts dd { margin: 0; color: #e2eaf0; font-size: 12px; font-weight: 600; }
+  .fact-detail-actions { display: flex; flex-wrap: wrap; gap: 7px; }
+  .fact-detail-actions a { display: inline-flex; min-height: 32px; align-items: center; gap: 6px; padding: 0 10px; border: 1px solid rgba(104,213,203,.42); border-radius: 4px; color: #8de2da; font-size: 11px; font-weight: 650; text-decoration: none; white-space: nowrap; }
+  .fact-detail-actions a:hover { border-color: #8de2da; background: rgba(104,213,203,.08); }
+  .fact-detail-actions a[hidden] { display: none; }
+  #fact-detail-close { position: absolute; top: 10px; right: 16px; display: grid; width: 32px; height: 32px; padding: 0; place-items: center; border: 0; background: transparent; color: #aebfcb; font-size: 25px; line-height: 1; cursor: pointer; }
+  #fact-detail-close:hover { color: #fff; }
+  #fact-lab-calibrator[data-mode="public"] { min-height: 100dvh; background: #101b24; }
+  #fact-lab-calibrator[data-mode="public"] #fact-lab-canvas { height: 100dvh; }
+  #fact-lab-calibrator[data-mode="public"] #fact-lab-controls { inset: 0 0 auto; display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "title actions" "roles roles"; width: auto; min-height: 104px; align-items: center; gap: 9px 28px; padding: 12px 28px 10px; border: 0; border-bottom: 1px solid rgba(119,170,204,.2); border-radius: 0; background: rgba(4,24,42,.965); box-shadow: 0 10px 34px rgba(0,0,0,.22); backdrop-filter: blur(16px); }
+  #fact-lab-calibrator[data-mode="public"] .fact-title-block { grid-area: title; display: grid; grid-template-columns: auto minmax(0, 1fr); min-width: 0; align-items: center; gap: 22px; }
+  #fact-lab-calibrator[data-mode="public"] .fact-brand { display: flex; }
+  #fact-lab-calibrator[data-mode="public"] .fact-map-title { min-width: 0; padding-left: 21px; border-left: 1px solid rgba(218,231,239,.18); }
+  #fact-lab-calibrator[data-mode="public"] #fact-lab-controls h1 { margin: 0; color: #f5f8fb; font-size: 16px; font-weight: 680; }
+  #fact-lab-calibrator[data-mode="public"] #fact-lab-summary { margin-top: 3px; overflow: hidden; color: #8fa6b5; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+  #fact-lab-calibrator[data-mode="public"] .fact-header-actions { grid-area: actions; display: flex; align-items: center; gap: 10px; }
+  #fact-lab-calibrator[data-mode="public"] .fact-language-modes { display: grid; width: 92px; }
+  #fact-lab-calibrator[data-mode="public"] .fact-role-legend { grid-area: roles; display: flex; padding-top: 8px; border-top: 1px solid rgba(171,199,216,.11); }
+  #fact-lab-calibrator[data-mode="public"] .fact-view-modes { flex: none; width: 174px; }
+  #fact-lab-calibrator[data-mode="public"] .fact-view-modes { border-color: rgba(211,227,238,.22); }
+  #fact-lab-calibrator[data-mode="public"] .fact-view-modes::before { background: #68d5cb; }
+  #fact-lab-calibrator[data-mode="public"] .fact-view-modes button { color: #bacbd5; }
+  #fact-lab-calibrator[data-mode="public"] .fact-view-modes button[aria-pressed="true"] { color: #071d2f; }
+  #fact-lab-calibrator[data-mode="public"] .fact-toggles,
+  #fact-lab-calibrator[data-mode="public"] #fact-lab-legend,
+  #fact-lab-calibrator[data-mode="public"] #fact-lab-status { display: none; }
+  #fact-lab-calibrator[data-mode="public"][data-view="3d"] .fact-workstation-marker { width: 50px; height: 46px; }
+  #fact-lab-calibrator[data-mode="public"][data-view="3d"] .fact-marker-photo { width: 32px; height: 32px; }
+  #fact-lab-calibrator[data-mode="public"][data-view="3d"] .fact-marker-id { right: 3px; }
+  #fact-lab-calibrator[data-mode="public"][data-view="3d"] .fact-marker-name { display: none; }
+  @media (max-width: 980px) {
+    #fact-lab-calibrator[data-mode="public"] #fact-lab-controls { grid-template-columns: minmax(0, 1fr); grid-template-areas: "title" "actions" "roles"; gap: 8px; }
+    #fact-lab-calibrator[data-mode="public"] .fact-header-actions { justify-content: flex-end; }
+    #fact-lab-calibrator[data-mode="public"] .fact-role-legend { overflow-x: auto; flex-wrap: nowrap; }
+  }
+  @media (max-width: 820px) {
+    #fact-lab-calibrator[data-mode="public"] .fact-brand-logo { width: 38px; height: 38px; }
+  }
+  @media (max-width: 640px) {
+    #fact-lab-calibrator, #fact-lab-canvas { min-height: 560px; height: 560px; }
+    #fact-lab-controls { gap: 8px; }
+    #fact-lab-status { left: 14px; right: 14px; }
+    .fact-workstation-marker { width: 34px; height: 42px; }
+    .fact-marker-photo { width: 26px; height: 26px; }
+    .fact-marker-id { top: -1px; right: -2px; width: 14px; height: 14px; font-size: 7px; }
+    .fact-marker-name { max-width: 44px; font-size: 8px; line-height: 12px; }
+    #fact-lab-calibrator[data-mode="public"] { min-height: 100dvh; }
+    #fact-lab-calibrator[data-mode="public"] #fact-lab-canvas { min-height: 100dvh; height: 100dvh; }
+    #fact-lab-calibrator[data-mode="public"] #fact-lab-controls { inset: 0 0 auto; gap: 7px; padding: 9px 12px 10px; }
+    #fact-lab-calibrator[data-mode="public"] .fact-title-block { grid-template-columns: 34px minmax(0, 1fr); gap: 10px; }
+    #fact-lab-calibrator[data-mode="public"] .fact-brand-logo { width: 34px; height: 34px; }
+    #fact-lab-calibrator[data-mode="public"] .fact-map-title { padding-left: 10px; }
+    #fact-lab-calibrator[data-mode="public"] #fact-lab-controls h1 { font-size: 13px; }
+    #fact-lab-calibrator[data-mode="public"] #fact-lab-summary { font-size: 9px; }
+    #fact-lab-calibrator[data-mode="public"] .fact-header-actions { justify-content: space-between; }
+    #fact-lab-calibrator[data-mode="public"] .fact-role-legend .legend-title { display: none; }
+    #fact-lab-calibrator[data-mode="public"] .fact-role-legend button { min-height: 25px; padding-inline: 7px; }
+    #fact-lab-calibrator[data-mode="public"] .fact-language-modes { width: 96px; }
+    #fact-lab-calibrator[data-mode="public"] .fact-view-modes { width: 142px; }
+    #fact-lab-calibrator[data-mode="public"] .fact-view-modes button { padding: 4px; font-size: 11px; }
+    #fact-lab-calibrator[data-mode="public"][data-view="3d"] .fact-workstation-marker { width: 34px; height: 36px; }
+    #fact-lab-calibrator[data-mode="public"][data-view="3d"] .fact-marker-photo { width: 26px; height: 26px; }
+    #fact-lab-calibrator[data-mode="public"][data-view="3d"] .fact-marker-id { right: -2px; }
+    #fact-person-panel { grid-template-columns: 64px minmax(0, 1fr); gap: 10px 14px; max-height: 48dvh; overflow-y: auto; padding: 14px 44px 14px 14px; }
+    .fact-detail-photo { width: 60px; height: 60px; }
+    #fact-detail-name { font-size: 17px; }
+    #fact-detail-bio { -webkit-line-clamp: 4; }
+    .fact-detail-meta { grid-column: 1 / -1; padding: 10px 0 0; border-top: 1px solid rgba(202,220,231,.15); border-left: 0; }
+  }
+</style>
+</head>
+<body>
+
+<div id="fact-lab-calibrator" aria-label="FACT Lab 2008A 工位布局">
+  <script>
+    document.getElementById('fact-lab-calibrator').dataset.mode = 'public';
+  </script>
+  <canvas id="fact-lab-canvas"></canvas>
+  <div id="fact-workstation-markers" aria-label="实验室人员座位"></div>
+  <section id="fact-lab-controls" aria-label="视图控制">
+    <div class="fact-title-block">
+      <a class="fact-brand" href="https://fact-lab.hkust.edu.hk/" target="_blank" rel="noreferrer" aria-label="访问 FACT Lab 官网">
+        <picture>
+          <source media="(max-width: 820px)" srcset="./assets/images/fact-lab-mark.svg">
+          <img class="fact-brand-logo" src="./assets/images/fact-lab-lockup.svg" alt="HKUST FACT Lab">
+        </picture>
+      </a>
+      <div class="fact-map-title">
+        <h1 id="fact-page-title">2008A Lab Seating Directory</h1>
+        <p id="fact-lab-summary">28 workstations · 25 members · 3 available</p>
+      </div>
+    </div>
+    <div class="fact-header-actions">
+      <div class="fact-language-modes" aria-label="Language">
+        <button type="button" data-language="en" aria-pressed="true">EN</button>
+        <button type="button" data-language="zh" aria-pressed="false">中文</button>
+      </div>
+      <div class="fact-view-modes" aria-label="View mode">
+        <button id="fact-top-view" type="button" aria-pressed="true">2D</button>
+        <button id="fact-3d-view" type="button" aria-pressed="false">3D</button>
+      </div>
+    </div>
+    <div class="fact-role-legend" aria-label="Filter by role">
+      <span class="legend-title">Filter by role</span>
+      <button class="faculty" type="button" data-role-filter="faculty" aria-pressed="false"><i></i><b>Research AP</b></button>
+      <button class="postdoc" type="button" data-role-filter="postdoc" aria-pressed="false"><i></i><b>Postdoc</b></button>
+      <button class="phd" type="button" data-role-filter="phd" aria-pressed="false"><i></i><b>PhD Student</b></button>
+      <button class="incoming" type="button" data-role-filter="incoming" aria-pressed="false"><i></i><b>Incoming</b></button>
+      <button class="visitor" type="button" data-role-filter="visitor" aria-pressed="false"><i></i><b>Visitor / Exchange</b></button>
+      <button class="vacant" type="button" data-role-filter="vacant" aria-pressed="false"><i></i><b>Available</b></button>
+    </div>
+    <div class="fact-toggles">
+      <label><input id="fact-toggle-plan" type="checkbox" checked> 原始平面图</label>
+      <label><input id="fact-toggle-model" type="checkbox" checked> 模型轮廓</label>
+      <label><input id="fact-toggle-grid" type="checkbox" checked> 1000 mm 网格</label>
+      <label><input id="fact-toggle-shell" type="checkbox" checked> 房间边界</label>
+      <label><input id="fact-toggle-wall-xray" type="checkbox" checked> 近侧墙透视</label>
+      <label><input id="fact-toggle-workstations" type="checkbox" checked> 工位编号</label>
+    </div>
+    <div id="fact-lab-legend" aria-label="图例">
+      <span><i class="plan"></i>原图</span><span><i class="model"></i>模型</span><span><i class="seat"></i>工位</span><span><i class="axis"></i>坐标轴</span>
+    </div>
+  </section>
+  <div id="fact-workstation-tooltip" role="status" hidden>
+    <div class="fact-person-photo" aria-hidden="true">
+      <img id="fact-workstation-photo" alt="" referrerpolicy="no-referrer" hidden>
+      <span id="fact-workstation-photo-fallback">?</span>
+    </div>
+    <div class="fact-person-details">
+      <div class="fact-person-heading">
+        <strong id="fact-workstation-name"></strong>
+        <span id="fact-workstation-id"></span>
+      </div>
+      <span id="fact-workstation-english"></span>
+      <span id="fact-workstation-role"></span>
+      <small id="fact-workstation-meta"></small>
+    </div>
+  </div>
+  <aside id="fact-person-panel" aria-label="Member profile" aria-live="polite" hidden>
+    <button id="fact-detail-close" type="button" title="Close profile" aria-label="Close profile">×</button>
+    <div class="fact-detail-photo" aria-hidden="true">
+      <img id="fact-detail-photo" alt="" referrerpolicy="no-referrer" hidden>
+      <span id="fact-detail-photo-fallback">?</span>
+    </div>
+    <div class="fact-detail-identity">
+      <span id="fact-detail-kicker" class="fact-detail-kicker">Member Profile</span>
+      <div class="fact-detail-heading">
+        <strong id="fact-detail-name"></strong>
+        <span id="fact-detail-english"></span>
+      </div>
+      <span id="fact-detail-role"></span>
+      <p id="fact-detail-bio" hidden></p>
+      <p id="fact-detail-note" hidden></p>
+    </div>
+    <div class="fact-detail-meta">
+      <dl class="fact-detail-facts">
+        <div><dt id="fact-detail-seat-label">Seat</dt><dd id="fact-detail-seat"></dd></div>
+        <div><dt id="fact-detail-zone-label">Zone</dt><dd id="fact-detail-zone"></dd></div>
+      </dl>
+      <div class="fact-detail-actions">
+        <a id="fact-detail-email" href="" hidden><span id="fact-detail-email-label">Email</span></a>
+        <a id="fact-detail-profile" href="" target="_blank" rel="noreferrer" hidden><span id="fact-detail-profile-label">Profile</span> <span aria-hidden="true">↗</span></a>
+      </div>
+    </div>
+  </aside>
+  <div id="fact-lab-status" aria-live="polite">原点：房间左上内角 (210, 260 px) · 1 px = 12.35 mm · X 向右，Y 向下</div>
+</div>
+
+<script type="importmap">
+{"imports":{"three":"https://esm.sh/three@0.160.0"}}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'https://esm.sh/three@0.160.0/examples/jsm/controls/OrbitControls.js';
+import { mergeGeometries } from 'https://esm.sh/three@0.160.0/examples/jsm/utils/BufferGeometryUtils.js';
+import { WORKSTATION_ASSIGNMENTS } from './assets/js/seating-data.js?v=20260828';
+
+const root = document.getElementById('fact-lab-calibrator');
+const canvas = document.getElementById('fact-lab-canvas');
+const status = document.getElementById('fact-lab-status');
+const isPublicView = true;
+root.dataset.mode = isPublicView ? 'public' : 'calibration';
+const workstationMarkers = document.getElementById('fact-workstation-markers');
+let currentLanguage = 'en';
+const UI_TEXT = {
+  en: {
+    documentTitle: 'FACT Lab 2008A Seating Directory',
+    pageTitle: '2008A Lab Seating Directory',
+    rootLabel: 'FACT Lab 2008A seating directory',
+    markerRegionLabel: 'Lab members by workstation',
+    controlsLabel: 'Map controls',
+    siteLabel: 'Visit the FACT Lab website',
+    roleLegendLabel: 'Filter by role',
+    legendTitle: 'Filter by role',
+    languageLabel: 'Language',
+    viewLabel: 'View mode',
+    profileLabel: 'Member profile',
+    profileKicker: 'Member Profile',
+    seat: 'Seat',
+    zone: 'Zone',
+    email: 'Email',
+    profile: 'Profile',
+    close: 'Close profile',
+    vacant: 'Available',
+    unknown: 'To be confirmed',
+    unassigned: 'Unassigned',
+    member: 'Lab Member',
+    noProfile: 'Profile not available',
+    availableRole: 'Currently available',
+    unknownRole: 'Occupant to be confirmed',
+    roles: {
+      faculty: 'Research AP', postdoc: 'Postdoc', phd: 'PhD Student',
+      incoming: 'Incoming', visitor: 'Visitor / Exchange', vacant: 'Available'
+    }
+  },
+  zh: {
+    documentTitle: 'FACT Lab 2008A 人员座位图',
+    pageTitle: '2008A 实验室座位分布',
+    rootLabel: 'FACT Lab 2008A 工位布局',
+    markerRegionLabel: '实验室人员座位',
+    controlsLabel: '地图控制',
+    siteLabel: '访问 FACT Lab 官网',
+    roleLegendLabel: '按人员类别筛选',
+    legendTitle: '人员类别',
+    languageLabel: '语言',
+    viewLabel: '视图模式',
+    profileLabel: '人员详情',
+    profileKicker: '人员资料',
+    seat: '工位',
+    zone: '区域',
+    email: '发送邮件',
+    profile: '个人主页',
+    close: '关闭详情',
+    vacant: '空位',
+    unknown: '待确认',
+    unassigned: '待分配',
+    member: '实验室成员',
+    noProfile: '暂无官网资料',
+    availableRole: '当前无人使用',
+    unknownRole: '使用者信息待确认',
+    roles: {
+      faculty: '研究助理教授', postdoc: '博士后', phd: '博士生',
+      incoming: 'Incoming', visitor: '访问 / 交换', vacant: '空位'
+    }
+  }
+};
+const ROLE_TRANSLATIONS = {
+  '研究助理教授': { en: 'Research Assistant Professor', zh: '研究助理教授' },
+  '博士后研究员': { en: 'Postdoctoral Researcher', zh: '博士后研究员' },
+  '博士生': { en: 'PhD Student', zh: '博士生' },
+  'Incoming Student': { en: 'Incoming Student', zh: 'Incoming Student' },
+  '交换生': { en: 'Exchange Student', zh: '交换生' }
+};
+const ZONE_TRANSLATIONS = {
+  '扇形区工位': { en: 'Fan-shaped Workstation', zh: '扇形区工位' },
+  '外侧工位': { en: 'Outer Workstation', zh: '外侧工位' },
+  '内侧工位': { en: 'Inner Workstation', zh: '内侧工位' }
+};
+const NOTE_TRANSLATIONS = {
+  '非实验室正式成员': { en: 'Exchange visitor · not a permanent lab member', zh: '非实验室正式成员' }
+};
+const ui = () => UI_TEXT[currentLanguage];
+const localizedRole = assignment => ROLE_TRANSLATIONS[assignment?.role]?.[currentLanguage]
+  || assignment?.role
+  || (assignment?.status === 'vacant' ? ui().availableRole : assignment?.status === 'unknown' ? ui().unknownRole : ui().member);
+const localizedZone = zone => ZONE_TRANSLATIONS[zone]?.[currentLanguage] || zone;
+const localizedNote = note => NOTE_TRANSLATIONS[note]?.[currentLanguage] || note || '';
+const personNames = assignment => {
+  if (!assignment?.name) return { primary: '', secondary: '' };
+  if (currentLanguage === 'en' && assignment.englishName) {
+    return { primary: assignment.englishName, secondary: assignment.name };
+  }
+  return { primary: assignment.name, secondary: assignment.englishName || '' };
+};
+const localizedOccupantName = assignment => {
+  if (assignment?.status === 'vacant') return ui().vacant;
+  if (assignment?.status === 'unknown') return ui().unknown;
+  return assignment?.name || ui().unassigned;
+};
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(isPublicView ? 0x101b24 : 0x14191c);
+
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.shadowMap.autoUpdate = false;
+
+// One affine coordinate system drives both the plan texture and every model object.
+// The source is 144 dpi at 1:70: 25.4 / 144 * 70 = 12.347 mm per image pixel.
+const MM_PER_PIXEL = 12.35;
+const PLAN_ORIGIN = { x: 210, y: 260 };
+const planToWorld = (px, py, height = 0) => new THREE.Vector3(
+  (px - PLAN_ORIGIN.x) * MM_PER_PIXEL,
+  height,
+  (py - PLAN_ORIGIN.y) * MM_PER_PIXEL
+);
+const planAngleToWorld = angleRadians => -angleRadians;
+
+const samplePlanSpline = (controls, divisions = 120) => new THREE.CatmullRomCurve3(
+  controls.map(([x, y]) => new THREE.Vector3(x, 0, y)),
+  false,
+  'centripetal'
+).getPoints(divisions).map(point => [point.x, point.z]);
+
+// Measured wall centrelines in source-plan pixels. Dense centripetal splines
+// keep the floor, wall meshes and outline on the same smooth boundaries.
+const curvedTopControls = [
+  [210,260],[300,262],[420,268],[550,276],[700,290],
+  [850,309],[1000,332],[1150,359],[1300,391],[1400,414],[1498,441]
+];
+const innerMainControls = [
+  [278,743],[400,746],[520,753],[640,762],
+  [760,775],[880,791],[1032,817]
+];
+const innerRightControls = [
+  [1144,838],[1210,853],[1280,870],[1340,885],[1374,899]
+];
+const curvedTopPlan = samplePlanSpline(curvedTopControls, 160);
+const innerMainPlan = samplePlanSpline(innerMainControls, 100);
+const innerRightPlan = samplePlanSpline(innerRightControls, 48);
+const curvedTopStart = curvedTopPlan[0];
+const curvedTopEnd = curvedTopPlan[curvedTopPlan.length - 1];
+const backDoorLeftPlan = [210,742];
+// Use the two outer-wall jamb points marked on the plan so both leaves share
+// one wall reference and cannot skew across the wall thickness.
+const frontDoorLeftPlan = [1032,817];
+const frontDoorRightPlan = [1144,838];
+const planPointAtX = (points, targetX) => {
+  const rightIndex = points.findIndex(point => point[0] >= targetX);
+  if (rightIndex <= 0) return [...points[0]];
+  const left = points[rightIndex - 1];
+  const right = points[rightIndex];
+  const t = (targetX - left[0]) / (right[0] - left[0]);
+  return [targetX, left[1] + (right[1] - left[1]) * t];
+};
+const planSliceBetweenX = (points, startX, endX) => [
+  planPointAtX(points, startX),
+  ...points.filter(point => point[0] > startX && point[0] < endX),
+  planPointAtX(points, endX)
+];
+const frontDoorLintelPlan = planSliceBetweenX(samplePlanSpline([
+  innerMainControls[innerMainControls.length - 2],
+  frontDoorLeftPlan,
+  frontDoorRightPlan,
+  innerRightControls[1]
+], 32), frontDoorLeftPlan[0], frontDoorRightPlan[0]);
+// The 750 and 1280 witness lines locate the doorway centre. The actual rear
+// leaf is a narrow 750 mm single door centred between those references.
+const REAR_DOOR_WIDTH = 750;
+const REAR_DOOR_CENTER_X = (338 + 442) / 2;
+const rearDoorHalfWidthPx = REAR_DOOR_WIDTH / MM_PER_PIXEL / 2;
+const rearDoorLeftX = REAR_DOOR_CENTER_X - rearDoorHalfWidthPx;
+const rearDoorRightX = REAR_DOOR_CENTER_X + rearDoorHalfWidthPx;
+const rearDoorLeftPlan = planPointAtX(innerMainPlan, rearDoorLeftX);
+const rearDoorRightPlan = planPointAtX(innerMainPlan, rearDoorRightX);
+const rearDoorLeftIndex = innerMainPlan.findIndex(point => point[0] >= rearDoorLeftX);
+const rearDoorRightIndex = innerMainPlan.findIndex(point => point[0] > rearDoorRightX);
+const innerWallBeforeRearDoor = [backDoorLeftPlan, ...innerMainPlan.slice(0, rearDoorLeftIndex), rearDoorLeftPlan];
+const innerWallAfterRearDoor = [rearDoorRightPlan, ...innerMainPlan.slice(rearDoorRightIndex)];
+const roomPlan = [
+  ...curvedTopPlan,
+  ...innerRightPlan.slice().reverse(),
+  ...innerMainPlan.slice().reverse(),
+  backDoorLeftPlan
+];
+const roomWorld = roomPlan.map(([x, y]) => planToWorld(x, y));
+const roomCenter = planToWorld(854, 575);
+const DEFAULT_3D_BASE_DISTANCE = 20500;
+const DEFAULT_3D_REFERENCE_ASPECT = 1.25;
+
+// A practical near plane preserves depth precision between the chair's
+// closely layered back frame and mesh while remaining far below the 3500 mm
+// minimum orbit distance.
+const perspective = new THREE.PerspectiveCamera(42, 1, 100, 100000);
+perspective.position.set(roomCenter.x, 14350, roomCenter.z + 14640);
+perspective.lookAt(roomCenter);
+const orthographic = new THREE.OrthographicCamera(-9000, 9000, 5200, -5200, 1, 50000);
+orthographic.position.set(roomCenter.x, 22000, roomCenter.z);
+orthographic.up.set(0, 0, -1);
+orthographic.lookAt(roomCenter);
+let activeCamera = orthographic;
+let viewMode = 'top';
+
+const controls = new OrbitControls(perspective, canvas);
+controls.target.copy(roomCenter);
+controls.enableDamping = true;
+controls.dampingFactor = .08;
+controls.maxPolarAngle = Math.PI * .49;
+controls.minDistance = 3500;
+controls.maxDistance = 70000;
+controls.enabled = false;
+
+function reset3dCamera() {
+  const aspectScale = Math.max(
+    1,
+    DEFAULT_3D_REFERENCE_ASPECT / Math.max(perspective.aspect, .4)
+  );
+  const distance = DEFAULT_3D_BASE_DISTANCE * aspectScale;
+  perspective.position.set(
+    roomCenter.x,
+    roomCenter.y + distance * .7,
+    roomCenter.z + distance * .714
+  );
+  controls.target.copy(roomCenter);
+  controls.update();
+}
+
+scene.add(new THREE.HemisphereLight(0xf1f5f3, 0x343b3e, 2.2));
+const sun = new THREE.DirectionalLight(0xfff4dd, 2.8);
+sun.position.set(4500, 15000, 3500);
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+scene.add(sun);
+
+const planGroup = new THREE.Group();
+const gridGroup = new THREE.Group();
+const floorGroup = new THREE.Group();
+const shell3dGroup = new THREE.Group();
+const roomOutlineGroup = new THREE.Group();
+const furniture3dGroup = new THREE.Group();
+const footprintGroup = new THREE.Group();
+const workstationUiGroup = new THREE.Group();
+scene.add(planGroup, gridGroup, floorGroup, shell3dGroup, roomOutlineGroup, furniture3dGroup, footprintGroup, workstationUiGroup);
+
+const materials = {
+  floor: new THREE.MeshStandardMaterial({ color: 0x343c3f, roughness: .94 }),
+  wall: new THREE.MeshStandardMaterial({ color: 0xeeeae4, roughness: .92 }),
+  glass: new THREE.MeshPhysicalMaterial({ color: 0x87bec6, roughness: .18, transmission: .18, transparent: true, opacity: .45 }),
+  desk: new THREE.MeshStandardMaterial({ color: 0xb88952, roughness: .7 }),
+  metal: new THREE.MeshStandardMaterial({ color: 0x858f93, roughness: .35, metalness: .65 }),
+  seat: new THREE.MeshStandardMaterial({ color: 0x2b3236, roughness: .82 }),
+  chair: new THREE.MeshStandardMaterial({ color: 0x263034, roughness: .86, transparent: true, opacity: .88, side: THREE.DoubleSide }),
+  chairFrame: new THREE.MeshStandardMaterial({ color: 0xb9bfbd, roughness: .62, metalness: .08 }),
+  screen: new THREE.MeshStandardMaterial({ color: 0xaab2b3, roughness: .78 }),
+  monitor: new THREE.MeshStandardMaterial({ color: 0x202628, roughness: .58 }),
+  keyboard: new THREE.MeshStandardMaterial({ color: 0x171b1d, roughness: .72 }),
+  cableWell: new THREE.MeshStandardMaterial({ color: 0x202426, roughness: .82 }),
+  powerStrip: new THREE.MeshStandardMaterial({ color: 0xe3e5e3, roughness: .7 }),
+  partition: new THREE.MeshStandardMaterial({ color: 0x8f9695, roughness: .84 }),
+  aisleScreen: new THREE.MeshStandardMaterial({ color: 0xc5c5bf, roughness: .96 }),
+  door: new THREE.MeshStandardMaterial({ color: 0xa97b54, roughness: .76 }),
+  doorGlass: new THREE.MeshPhysicalMaterial({ color: 0x9fcbd0, roughness: .12, transmission: .68, transparent: true, opacity: .52 }),
+  cabinet: new THREE.MeshStandardMaterial({ color: 0xc7cbc8, roughness: .78 }),
+  cabinetWood: new THREE.MeshStandardMaterial({ color: 0xa97850, roughness: .76 }),
+  cabinetWoodInset: new THREE.MeshStandardMaterial({ color: 0x80583d, roughness: .84 }),
+  yellow: new THREE.MeshStandardMaterial({ color: 0xe2b51e, roughness: .72 }),
+  footprint: new THREE.MeshBasicMaterial({ color: 0xee9f37, transparent: true, opacity: .34, depthTest: false }),
+  footprintEdge: new THREE.LineBasicMaterial({ color: 0xffba5c, transparent: true, opacity: .98, depthTest: false }),
+  roomEdge: new THREE.LineBasicMaterial({ color: 0x57b5a7, transparent: true, opacity: .95, depthTest: false }),
+  grid: new THREE.LineBasicMaterial({ color: 0x70a39b, transparent: true, opacity: .2, depthTest: false }),
+  wallFade: new THREE.MeshStandardMaterial({ color: 0xeeeae4, roughness: .92, transparent: true, opacity: .08, depthWrite: false, side: THREE.DoubleSide }),
+  wallFadeEdge: new THREE.LineBasicMaterial({ color: 0xd8d3cc, transparent: true, opacity: .72, depthWrite: false })
+};
+
+const cameraFadeWalls = [];
+const workstations = [];
+const workstationHitTargets = [];
+const workstationHitMaterial = new THREE.MeshBasicMaterial({ visible: false });
+const markerProjection = new THREE.Vector3();
+const workstationHighlight = new THREE.Mesh(
+  new THREE.RingGeometry(340, 435, 48),
+  new THREE.MeshBasicMaterial({
+    color: 0x56d6c2,
+    transparent: true,
+    opacity: .92,
+    side: THREE.DoubleSide,
+    depthTest: false,
+    depthWrite: false
+  })
+);
+workstationHighlight.rotation.x = -Math.PI / 2;
+workstationHighlight.position.y = 44;
+workstationHighlight.renderOrder = 12;
+workstationHighlight.visible = false;
+workstationUiGroup.add(workstationHighlight);
+
+const geometryCache = new Map();
+const edgeGeometryCache = new Map();
+
+function cachedGeometry(key, factory) {
+  if (!geometryCache.has(key)) geometryCache.set(key, factory());
+  return geometryCache.get(key);
+}
+
+function cachedBoxGeometry(w, h, d) {
+  return cachedGeometry(`box:${w}:${h}:${d}`, () => new THREE.BoxGeometry(w, h, d));
+}
+
+function cachedCylinderGeometry(radius, height, segments) {
+  return cachedGeometry(`cylinder:${radius}:${height}:${segments}`, () => (
+    new THREE.CylinderGeometry(radius, radius, height, segments)
+  ));
+}
+
+function cachedBoxEdges(w, h, d) {
+  const key = `box-edge:${w}:${h}:${d}`;
+  if (!edgeGeometryCache.has(key)) edgeGeometryCache.set(key, new THREE.EdgesGeometry(cachedBoxGeometry(w, h, d)));
+  return edgeGeometryCache.get(key);
+}
+
+function registerCameraFadeWall(wall) {
+  wall.userData.cameraFadeWall = true;
+  wall.geometry.computeBoundingSphere();
+  const outline = new THREE.LineSegments(
+    new THREE.EdgesGeometry(wall.geometry, 25),
+    materials.wallFadeEdge
+  );
+  outline.visible = false;
+  outline.renderOrder = 4;
+  wall.add(outline);
+  cameraFadeWalls.push({
+    wall,
+    outline,
+    localCenter: wall.geometry.boundingSphere.center.clone(),
+    faded: false
+  });
+  return wall;
+}
+
+function geometryAttributeSignature(geometry) {
+  return Object.keys(geometry.attributes).sort().map(name => {
+    const attribute = geometry.attributes[name];
+    return `${name}:${attribute.itemSize}:${attribute.normalized ? 1 : 0}:${attribute.array.constructor.name}`;
+  }).join('|');
+}
+
+function batchStaticObjects(rootGroup, predicate, createObject) {
+  scene.updateMatrixWorld(true);
+  const rootInverse = rootGroup.matrixWorld.clone().invert();
+  const batches = new Map();
+
+  rootGroup.traverse(object => {
+    if (!predicate(object) || !object.geometry || Array.isArray(object.material)) return;
+    if (Object.keys(object.geometry.morphAttributes).length) return;
+    const key = [
+      object.material.uuid,
+      geometryAttributeSignature(object.geometry),
+      object.castShadow ? 1 : 0,
+      object.receiveShadow ? 1 : 0,
+      object.renderOrder
+    ].join(':');
+    if (!batches.has(key)) batches.set(key, []);
+    batches.get(key).push(object);
+  });
+
+  let sourceCount = 0;
+  let mergedCount = 0;
+  for (const objects of batches.values()) {
+    if (objects.length < 2) continue;
+    const transformed = objects.map(object => {
+      const geometry = object.geometry.index ? object.geometry.toNonIndexed() : object.geometry.clone();
+      const transform = rootInverse.clone().multiply(object.matrixWorld);
+      geometry.applyMatrix4(transform);
+      return geometry;
+    });
+    const mergedGeometry = mergeGeometries(transformed, false);
+    transformed.forEach(geometry => geometry.dispose());
+    if (!mergedGeometry) continue;
+
+    const source = objects[0];
+    const mergedObject = createObject(mergedGeometry, source.material);
+    mergedObject.castShadow = source.castShadow;
+    mergedObject.receiveShadow = source.receiveShadow;
+    mergedObject.renderOrder = source.renderOrder;
+    mergedObject.name = `batched-${source.material.name || source.material.uuid}`;
+    objects.forEach(object => object.removeFromParent());
+    rootGroup.add(mergedObject);
+    sourceCount += objects.length;
+    mergedCount += 1;
+  }
+  return { sourceCount, mergedCount };
+}
+
+function batchStaticMeshes(rootGroup, includeTransparent = false, filter = () => true) {
+  return batchStaticObjects(
+    rootGroup,
+    object => object.isMesh && filter(object) && (includeTransparent || !object.material.transparent),
+    (geometry, material) => new THREE.Mesh(geometry, material)
+  );
+}
+
+function batchStaticLineSegments(rootGroup) {
+  return batchStaticObjects(
+    rootGroup,
+    object => object.isLineSegments,
+    (geometry, material) => new THREE.LineSegments(geometry, material)
+  );
+}
+
+function box(w, h, d, material, x, y, z, parent) {
+  const mesh = new THREE.Mesh(cachedBoxGeometry(w, h, d), material);
+  mesh.position.set(x, y + h / 2, z);
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
+  parent.add(mesh);
+  return mesh;
+}
+
+function cylinder(radius, height, material, x, y, z, parent, segments = 28) {
+  const mesh = new THREE.Mesh(cachedCylinderGeometry(radius, height, segments), material);
+  mesh.position.set(x, y + height / 2, z);
+  mesh.castShadow = true;
+  parent.add(mesh);
+  return mesh;
+}
+
+function footprintBox(w, d, x, z, parent, rotation = 0) {
+  const mesh = new THREE.Mesh(cachedBoxGeometry(w, 18, d), materials.footprint);
+  mesh.position.set(x, 32, z);
+  mesh.rotation.y = rotation;
+  mesh.renderOrder = 5;
+  parent.add(mesh);
+  const edge = new THREE.LineSegments(cachedBoxEdges(w, 18, d), materials.footprintEdge);
+  edge.position.copy(mesh.position);
+  edge.rotation.copy(mesh.rotation);
+  edge.renderOrder = 6;
+  parent.add(edge);
+}
+
+function makePlanGroups(px, py, angle = 0) {
+  const object3d = new THREE.Group();
+  const footprint = new THREE.Group();
+  const position = planToWorld(px, py);
+  object3d.position.copy(position);
+  footprint.position.copy(position);
+  object3d.rotation.y = planAngleToWorld(angle);
+  footprint.rotation.y = planAngleToWorld(angle);
+  furniture3dGroup.add(object3d);
+  footprintGroup.add(footprint);
+  return { object3d, footprint };
+}
+
+let sharedChairGeometries;
+
+function getChairGeometries() {
+  if (sharedChairGeometries) return sharedChairGeometries;
+
+  const seatShape = new THREE.Shape();
+  seatShape.moveTo(-205, -225);
+  seatShape.quadraticCurveTo(-250, -215, -250, -155);
+  seatShape.lineTo(-250, 165);
+  seatShape.quadraticCurveTo(-250, 235, -175, 240);
+  seatShape.lineTo(175, 240);
+  seatShape.quadraticCurveTo(250, 235, 250, 165);
+  seatShape.lineTo(250, -155);
+  seatShape.quadraticCurveTo(250, -215, 205, -225);
+  seatShape.closePath();
+
+  const backFrameShape = new THREE.Shape();
+  backFrameShape.moveTo(-170, 0);
+  backFrameShape.bezierCurveTo(-225, 90, -250, 420, -205, 590);
+  backFrameShape.quadraticCurveTo(0, 645, 205, 590);
+  backFrameShape.bezierCurveTo(250, 420, 225, 90, 170, 0);
+  backFrameShape.quadraticCurveTo(0, -20, -170, 0);
+  backFrameShape.closePath();
+
+  const backMeshShape = new THREE.Shape();
+  backMeshShape.moveTo(-145, 30);
+  backMeshShape.bezierCurveTo(-185, 125, -205, 405, -170, 550);
+  backMeshShape.quadraticCurveTo(0, 590, 170, 550);
+  backMeshShape.bezierCurveTo(205, 405, 185, 125, 145, 30);
+  backMeshShape.quadraticCurveTo(0, 12, -145, 30);
+  backMeshShape.closePath();
+
+  sharedChairGeometries = {
+    seat: new THREE.ExtrudeGeometry(seatShape, {
+      depth: 70,
+      bevelEnabled: true,
+      bevelSegments: 3,
+      bevelSize: 9,
+      bevelThickness: 8,
+      curveSegments: 10
+    }),
+    backFrame: new THREE.ExtrudeGeometry(backFrameShape, {
+      depth: 44,
+      bevelEnabled: true,
+      bevelSegments: 2,
+      bevelSize: 7,
+      bevelThickness: 7,
+      curveSegments: 12
+    }),
+    backMesh: new THREE.ExtrudeGeometry(backMeshShape, {
+      depth: 20,
+      bevelEnabled: true,
+      bevelSegments: 2,
+      bevelSize: 4,
+      bevelThickness: 4,
+      curveSegments: 12
+    }),
+    wheel: new THREE.TorusGeometry(30, 9, 8, 16)
+  };
+  return sharedChairGeometries;
+}
+
+function addChair(x, z, yaw, object3d, footprint) {
+  const g = new THREE.Group();
+  g.position.set(x, 0, z);
+  g.rotation.y = yaw;
+  const chairGeometry = getChairGeometries();
+
+  // Tapered cushion with a rounded front edge.
+  const seat = new THREE.Mesh(chairGeometry.seat, materials.seat);
+  seat.rotation.x = Math.PI / 2;
+  seat.position.y = 500;
+  seat.castShadow = true;
+  g.add(seat);
+
+  // A light outer frame and inset dark panel give the back its ergonomic profile.
+  const backFrame = new THREE.Mesh(chairGeometry.backFrame, materials.chairFrame);
+  backFrame.position.set(0, 500, -270);
+  backFrame.rotation.x = -.10;
+  backFrame.castShadow = true;
+  g.add(backFrame);
+
+  const backMesh = new THREE.Mesh(chairGeometry.backMesh, materials.chair);
+  backMesh.position.set(0, 500, -238);
+  backMesh.rotation.x = -.10;
+  backMesh.castShadow = true;
+  g.add(backMesh);
+
+  box(410, 32, 360, materials.chairFrame, 0, 398, -5, g);
+  cylinder(25, 300, materials.metal, 0, 100, 0, g, 18);
+  cylinder(42, 95, materials.chairFrame, 0, 55, 0, g, 18);
+
+  for (const side of [-1, 1]) {
+    const support = box(36, 225, 42, materials.chairFrame, side * 245, 455, -45, g);
+    support.rotation.z = side * .16;
+    box(72, 34, 185, materials.chair, side * 255, 680, 40, g);
+  }
+
+  cylinder(58, 50, materials.chairFrame, 0, 45, 0, g, 18);
+  for (let i = 0; i < 5; i++) {
+    const a = i * Math.PI * 2 / 5;
+    const spoke = box(330, 24, 42, materials.chairFrame, Math.cos(a) * 165, 48, Math.sin(a) * 165, g);
+    spoke.rotation.y = -a;
+    const wheel = new THREE.Mesh(chairGeometry.wheel, materials.chair);
+    wheel.position.set(Math.cos(a) * 330, 31, Math.sin(a) * 330);
+    wheel.rotation.y = -a;
+    wheel.castShadow = true;
+    g.add(wheel);
+  }
+  object3d.add(g);
+  footprintBox(630, 655, x, z, footprint, yaw);
+  return g;
+}
+
+function workstationMarkerStatus(assignment) {
+  if (assignment?.status === 'vacant') return 'vacant';
+  if (assignment?.status === 'unknown') return 'unknown';
+  if (assignment?.role === '研究助理教授') return 'faculty';
+  if (assignment?.role === '博士后研究员') return 'postdoc';
+  if (assignment?.role === '博士生') return 'phd';
+  if (assignment?.role === 'Incoming Student') return 'incoming';
+  if (/交换|访问/.test(assignment?.role || '') || /交换|访问/.test(assignment?.note || '')) return 'visitor';
+  return 'member';
+}
+
+function createWorkstationMarker(workstation) {
+  const assignment = workstation.assignment;
+  const isVacant = assignment?.status === 'vacant';
+  const isUnknown = assignment?.status === 'unknown';
+  const marker = document.createElement('button');
+  marker.type = 'button';
+  marker.className = 'fact-workstation-marker';
+  marker.dataset.status = workstationMarkerStatus(assignment);
+  marker.dataset.active = 'false';
+  marker.dataset.selected = 'false';
+  marker.setAttribute('aria-expanded', 'false');
+  marker.setAttribute('aria-controls', 'fact-person-panel');
+
+  const photo = document.createElement('span');
+  photo.className = 'fact-marker-photo';
+  const fallback = document.createElement('span');
+  fallback.className = 'fact-marker-fallback';
+  fallback.textContent = isVacant ? '—' : isUnknown ? '?' : assignment?.name ? Array.from(assignment.name)[0] : '—';
+  photo.append(fallback);
+
+  if (assignment?.photoUrl) {
+    const image = document.createElement('img');
+    image.alt = '';
+    image.referrerPolicy = 'no-referrer';
+    image.src = assignment.photoUrl;
+    if (assignment.markerPhotoPosition) image.style.objectPosition = assignment.markerPhotoPosition;
+    fallback.hidden = true;
+    image.addEventListener('error', () => {
+      image.hidden = true;
+      fallback.hidden = false;
+    });
+    photo.prepend(image);
+  }
+
+  const id = document.createElement('span');
+  id.className = 'fact-marker-id';
+  id.textContent = workstation.id.slice(1);
+  const name = document.createElement('span');
+  name.className = 'fact-marker-name';
+  marker.append(photo, id, name);
+  workstation.markerNameElement = name;
+  workstation.markerFallbackElement = fallback;
+  refreshWorkstationMarker(workstation, marker);
+  marker.addEventListener('pointerenter', event => setHoveredWorkstation(workstation, event));
+  marker.addEventListener('pointermove', event => positionWorkstationTooltip(event));
+  marker.addEventListener('pointerleave', () => {
+    if (pinnedWorkstation !== workstation) setHoveredWorkstation(null);
+  });
+  marker.addEventListener('click', event => {
+    event.stopPropagation();
+    if (isPublicView) {
+      setSelectedWorkstation(selectedWorkstation === workstation ? null : workstation);
+      setHoveredWorkstation(null);
+      return;
+    }
+    pinnedWorkstation = pinnedWorkstation === workstation ? null : workstation;
+    setHoveredWorkstation(pinnedWorkstation, event);
+  });
+  workstationMarkers.append(marker);
+  return marker;
+}
+
+function refreshWorkstationMarker(workstation, marker = workstation.marker) {
+  const assignment = workstation.assignment;
+  const names = personNames(assignment);
+  const occupant = localizedOccupantName(assignment);
+  const accessibleName = names.secondary ? `${names.primary} (${names.secondary})` : names.primary || occupant;
+  marker.setAttribute('aria-label', `${workstation.id} ${accessibleName} · ${localizedZone(workstation.zone)}`);
+  workstation.markerNameElement.textContent = assignment?.name || occupant;
+  if (assignment?.status === 'vacant') workstation.markerFallbackElement.textContent = currentLanguage === 'en' ? '—' : '空';
+}
+
+function addWorkstationChair(x, z, yaw, object3d, footprint, zone) {
+  const chair = addChair(x, z, yaw, object3d, footprint);
+  const id = `S${String(workstations.length + 1).padStart(2, '0')}`;
+  workstations.push({ id, zone, chair, assignment: WORKSTATION_ASSIGNMENTS[id] || null });
+  return chair;
+}
+
+function buildWorkstationUi() {
+  for (const workstation of workstations) {
+    workstation.chair.updateWorldMatrix(true, false);
+    const worldPosition = workstation.chair.getWorldPosition(new THREE.Vector3());
+    workstation.worldPosition = worldPosition;
+
+    const hitTarget = new THREE.Mesh(
+      cachedCylinderGeometry(420, 1200, 20),
+      workstationHitMaterial
+    );
+    hitTarget.position.set(worldPosition.x, 600, worldPosition.z);
+    hitTarget.userData.workstation = workstation;
+    workstationUiGroup.add(hitTarget);
+    workstationHitTargets.push(hitTarget);
+    workstation.hitTarget = hitTarget;
+
+    workstation.marker = createWorkstationMarker(workstation);
+  }
+}
+
+function chairYawToward(x, z, targetX = 0, targetZ = 0) {
+  // A chair's local +Z direction is its seated facing direction; the backrest sits at -Z.
+  return Math.atan2(targetX - x, targetZ - z);
+}
+
+function addPanel(w, d, x, z, object3d, footprint) {
+  box(w, 32, d, materials.desk, x, 713, z, object3d);
+  footprintBox(w, d, x, z, footprint);
+}
+
+function addLegs(w, d, object3d) {
+  const lx = w / 2 - 90;
+  const lz = d / 2 - 90;
+  for (const x of [-lx, lx]) for (const z of [-lz, lz]) box(42, 713, 42, materials.metal, x, 0, z, object3d);
+}
+
+function footprintDisc(radius, x, z, parent) {
+  const disc = new THREE.Mesh(new THREE.CylinderGeometry(radius, radius, 18, 32), materials.footprint);
+  disc.position.set(x, 32, z);
+  disc.renderOrder = 5;
+  parent.add(disc);
+  const edge = new THREE.LineSegments(new THREE.EdgesGeometry(disc.geometry), materials.footprintEdge);
+  edge.position.copy(disc.position);
+  edge.renderOrder = 6;
+  parent.add(edge);
+}
+
+// Dimensions digitized from the repeated CAD symbols in the source plan.
+// A 32-inch 16:9 panel is about 708 x 399 mm before its bezel.
+const MONITOR_WIDTH = 730;
+const MONITOR_HEIGHT = 420;
+const MONITOR_THICKNESS = 38;
+const MONITOR_BASE_RADIUS = 90;
+const MONITOR_CENTER_OFFSET = 90;
+const KEYBOARD_WIDTH = 470;
+const KEYBOARD_DEPTH = 200;
+const KEYBOARD_CENTER_OFFSET = 345;
+
+function addMonitor(x, z, yaw, object3d, footprint) {
+  cylinder(MONITOR_BASE_RADIUS, 18, materials.metal, x, 745, z, object3d, 24);
+  cylinder(18, 105, materials.metal, x, 745, z, object3d, 16);
+  const monitor = box(MONITOR_WIDTH, MONITOR_HEIGHT, MONITOR_THICKNESS, materials.monitor, x, 850, z, object3d);
+  monitor.rotation.y = yaw;
+  footprintDisc(MONITOR_BASE_RADIUS, x, z, footprint);
+  footprintBox(MONITOR_WIDTH, MONITOR_THICKNESS, x, z, footprint, yaw);
+}
+
+function addKeyboard(x, z, yaw, object3d, footprint) {
+  const keyboard = box(KEYBOARD_WIDTH, 24, KEYBOARD_DEPTH, materials.keyboard, x, 745, z, object3d);
+  keyboard.rotation.y = yaw;
+  footprintBox(KEYBOARD_WIDTH, KEYBOARD_DEPTH, x, z, footprint, yaw);
+}
+
+function addSquareLegs(zCenter, object3d) {
+  for (const x of [-460, 460]) {
+    for (const z of [zCenter - 460, zCenter + 460]) box(42, 713, 42, materials.metal, x, 0, z, object3d);
+  }
+}
+
+function addOpenSquareDesk(px, py, angle) {
+  const { object3d, footprint } = makePlanGroups(px, py, angle);
+  addPanel(1100, 1100, 0, 0, object3d, footprint);
+  addSquareLegs(0, object3d);
+  addMonitor(0, -MONITOR_CENTER_OFFSET, 0, object3d, footprint);
+  addMonitor(0, MONITOR_CENTER_OFFSET, Math.PI, object3d, footprint);
+  addKeyboard(0, -KEYBOARD_CENTER_OFFSET, 0, object3d, footprint);
+  addKeyboard(0, KEYBOARD_CENTER_OFFSET, Math.PI, object3d, footprint);
+  addWorkstationChair(0, -900, chairYawToward(0, -900, 0, -100), object3d, footprint, '外侧工位');
+  addWorkstationChair(0, 900, chairYawToward(0, 900, 0, 100), object3d, footprint, '外侧工位');
+}
+
+function addCurvedAisleScreen(object3d, footprint) {
+  // Manufacturer profile: 1600 mm straight run (800 + 800), with R150 returns.
+  // The 40 mm inner line gives the screen its physical thickness.
+  const shape = new THREE.Shape();
+  shape.moveTo(-950, 950);
+  shape.quadraticCurveTo(-950, 1100, -800, 1100);
+  shape.lineTo(800, 1100);
+  shape.quadraticCurveTo(950, 1100, 950, 950);
+  shape.lineTo(910, 950);
+  shape.quadraticCurveTo(910, 1060, 800, 1060);
+  shape.lineTo(-800, 1060);
+  shape.quadraticCurveTo(-910, 1060, -910, 950);
+  shape.closePath();
+
+  const screen = new THREE.Mesh(new THREE.ExtrudeGeometry(shape, {
+    depth: 1350,
+    bevelEnabled: true,
+    bevelSegments: 3,
+    bevelSize: 8,
+    bevelThickness: 8,
+    curveSegments: 20
+  }), materials.aisleScreen);
+  screen.rotation.x = Math.PI / 2;
+  screen.position.y = 1350;
+  screen.castShadow = true;
+  screen.receiveShadow = true;
+  object3d.add(screen);
+
+  const planGeometry = new THREE.ShapeGeometry(shape, 20);
+  const fill = new THREE.Mesh(planGeometry, materials.footprint);
+  fill.rotation.x = Math.PI / 2;
+  fill.position.y = 34;
+  fill.renderOrder = 5;
+  footprint.add(fill);
+}
+
+function addOpenDeskPair(px, py, angle, hasAisleScreen = false) {
+  const { object3d, footprint } = makePlanGroups(px, py, angle);
+  for (const zCenter of [-550, 550]) {
+    addPanel(1100, 1100, 0, zCenter, object3d, footprint);
+    addSquareLegs(zCenter, object3d);
+    addMonitor(-MONITOR_CENTER_OFFSET, zCenter, Math.PI / 2, object3d, footprint);
+    addMonitor(MONITOR_CENTER_OFFSET, zCenter, -Math.PI / 2, object3d, footprint);
+    addKeyboard(-KEYBOARD_CENTER_OFFSET, zCenter, Math.PI / 2, object3d, footprint);
+    addKeyboard(KEYBOARD_CENTER_OFFSET, zCenter, -Math.PI / 2, object3d, footprint);
+    addWorkstationChair(-900, zCenter, chairYawToward(-900, zCenter, -100, zCenter), object3d, footprint, '外侧工位');
+    addWorkstationChair(900, zCenter, chairYawToward(900, zCenter, 100, zCenter), object3d, footprint, '外侧工位');
+  }
+  if (hasAisleScreen) addCurvedAisleScreen(object3d, footprint);
+}
+
+function addEnclosedDeskPair(px, py, angle) {
+  const { object3d, footprint } = makePlanGroups(px, py, angle);
+  for (const zCenter of [-550, 550]) {
+    addPanel(1100, 1100, 0, zCenter, object3d, footprint);
+    addSquareLegs(zCenter, object3d);
+    addMonitor(-MONITOR_CENTER_OFFSET, zCenter, Math.PI / 2, object3d, footprint);
+    addMonitor(MONITOR_CENTER_OFFSET, zCenter, -Math.PI / 2, object3d, footprint);
+    addKeyboard(-KEYBOARD_CENTER_OFFSET, zCenter, Math.PI / 2, object3d, footprint);
+    addKeyboard(KEYBOARD_CENTER_OFFSET, zCenter, -Math.PI / 2, object3d, footprint);
+    addWorkstationChair(-900, zCenter, chairYawToward(-900, zCenter, -100, zCenter), object3d, footprint, '内侧工位');
+    addWorkstationChair(900, zCenter, chairYawToward(900, zCenter, 100, zCenter), object3d, footprint, '内侧工位');
+
+    // Two back-to-back overhead cabinets, one for each 1100 x 550 mm workstation.
+    box(400, 410, 980, materials.cabinet, -216, 1130, zCenter, object3d);
+    box(400, 410, 980, materials.cabinet, 216, 1130, zCenter, object3d);
+    box(350, 520, 450, materials.cabinet, -335, 0, zCenter + 220, object3d);
+    box(350, 520, 450, materials.cabinet, 335, 0, zCenter - 220, object3d);
+  }
+
+  // The central spine is the shared back panel; three cross panels form four cubicles.
+  box(32, 1688, 2200, materials.partition, 0, 0, 0, object3d);
+  for (const boundaryZ of [-1100, 0, 1100]) {
+    box(1100, 1688, 32, materials.partition, 0, 0, boundaryZ, object3d);
+    box(520, 180, 64, materials.yellow, -275, 760, boundaryZ, object3d);
+    box(520, 180, 64, materials.yellow, 275, 760, boundaryZ, object3d);
+  }
+}
+
+function addMeetingTable(px, py, angle) {
+  const { object3d, footprint } = makePlanGroups(px, py, angle);
+  addPanel(2400, 1100, 0, 0, object3d, footprint);
+  addLegs(2400, 1100, object3d);
+
+  // Recessed centre cable well with a visible power strip and six outlets.
+  box(920, 10, 190, materials.cableWell, 0, 746, 0, object3d);
+  box(610, 14, 76, materials.powerStrip, 0, 756, 0, object3d);
+  for (const x of [-240, -144, -48, 48, 144, 240]) {
+    cylinder(18, 7, materials.keyboard, x, 770, 0, object3d, 20);
+  }
+  box(920, 10, 24, materials.metal, 0, 756, -107, object3d);
+  box(920, 10, 24, materials.metal, 0, 756, 107, object3d);
+
+  // The display is mounted at the wall-facing short end of the table.
+  box(80, 1430, 2300, materials.metal, 1180, 810, 0, object3d);
+  box(24, 1310, 2180, materials.monitor, 1120, 870, 0, object3d);
+  footprintBox(80, 2300, 1180, 0, footprint);
+
+  for (const x of [-800, 0, 800]) {
+    addChair(x, -900, chairYawToward(x, -900, x, 0), object3d, footprint);
+    addChair(x, 900, chairYawToward(x, 900, x, 0), object3d, footprint);
+  }
+}
+
+function addSolidWoodPrinterCabinet() {
+  const width = 900;
+  const depth = 450;
+  const height = 2200;
+  const wallThickness = 120;
+  const wallStart = curvedTopEnd;
+  const wallEnd = innerRightPlan[innerRightPlan.length - 1];
+  const centerY = 600;
+  const wallT = (centerY - wallStart[1]) / (wallEnd[1] - wallStart[1]);
+  const wallCenter = [
+    THREE.MathUtils.lerp(wallStart[0], wallEnd[0], wallT),
+    centerY
+  ];
+  const wallAngle = Math.atan2(
+    wallEnd[1] - wallStart[1],
+    wallEnd[0] - wallStart[0]
+  );
+  const { object3d, footprint } = makePlanGroups(...wallCenter, wallAngle);
+
+  // Local +Z points into the room. The cabinet's rear face touches the inner
+  // face of the 120 mm wall while its width follows the wall centreline.
+  const zCenter = wallThickness / 2 + depth / 2;
+  const side = 32;
+  const doorGap = 8;
+  const doorWidth = (width - doorGap * 3) / 2;
+  const frontZ = zCenter + depth / 2 + 12;
+  const rearClearance = 4;
+  const carcassDepth = depth - rearClearance;
+  const carcassZ = zCenter + rearClearance / 2;
+  const carcassFrontZ = zCenter + depth / 2;
+  const backPanelRearZ = zCenter - depth / 2 + rearClearance * 2;
+  const backPanelFrontZ = backPanelRearZ + 24;
+  const shelfRearZ = backPanelFrontZ + rearClearance;
+  const shelfDepth = carcassFrontZ - shelfRearZ;
+  const shelfZ = (carcassFrontZ + shelfRearZ) / 2;
+
+  // Keep a small installation gap behind every wall-facing surface to avoid
+  // coplanar depth flicker, without moving the cabinet front or footprint.
+  box(side, height, carcassDepth, materials.cabinetWood, -width / 2 + side / 2, 0, carcassZ, object3d);
+  box(side, height, carcassDepth, materials.cabinetWood, width / 2 - side / 2, 0, carcassZ, object3d);
+  box(width - side * 2, height - 64, 24, materials.cabinetWoodInset, 0, 32, backPanelRearZ + 12, object3d);
+  box(width, 32, carcassDepth, materials.cabinetWood, 0, 0, carcassZ, object3d);
+  box(width, 32, carcassDepth, materials.cabinetWood, 0, height - 32, carcassZ, object3d);
+  box(width - 80, 80, depth - 70, materials.cabinetWoodInset, 0, 0, zCenter + 18, object3d);
+
+  // Internal shelves stop just in front of the recessed back panel instead of
+  // passing through it and exposing coplanar strips on the cabinet rear.
+  box(width - side * 2, 40, shelfDepth, materials.cabinetWood, 0, 820, shelfZ, object3d);
+  box(width - side * 2, 32, shelfDepth, materials.cabinetWood, 0, 1508, shelfZ, object3d);
+  for (const sideSign of [-1, 1]) {
+    const doorX = sideSign * (doorWidth / 2 + doorGap / 2);
+    box(doorWidth, 700, 24, materials.cabinetWood, doorX, 100, frontZ, object3d);
+    box(doorWidth, 610, 24, materials.cabinetWood, doorX, 1548, frontZ, object3d);
+    box(14, 120, 18, materials.metal, sideSign * 25, 390, frontZ + 22, object3d);
+    box(14, 80, 18, materials.metal, sideSign * 25, 1575, frontZ + 22, object3d);
+  }
+
+  // Power provision in the open printer niche.
+  const powerStripZ = backPanelFrontZ + 4;
+  box(180, 76, 8, materials.powerStrip, -210, 1040, powerStripZ, object3d);
+  for (const x of [-250, -210, -170]) {
+    box(18, 32, 5, materials.keyboard, x, 1062, powerStripZ + 6.5, object3d);
+  }
+
+  footprintBox(width, depth, 0, zCenter, footprint);
+}
+
+const FAN_DEPTH = 1100;
+const FAN_REFERENCE_DEPTH = 1200;
+const FAN_OUTER_ARC = 2300;
+const FAN_INNER_ARC = 1260;
+// The original diameter and angle match the plan. Keep that curvature, then
+// move only the inner arc so each radial edge follows the 1100 mm plan fit.
+const FAN_OUTER_RADIUS = FAN_REFERENCE_DEPTH * FAN_OUTER_ARC / (FAN_OUTER_ARC - FAN_INNER_ARC);
+const FAN_INNER_RADIUS = FAN_OUTER_RADIUS - FAN_DEPTH;
+const FAN_MID_RADIUS = (FAN_INNER_RADIUS + FAN_OUTER_RADIUS) / 2;
+const FAN_SPAN = FAN_OUTER_ARC / FAN_OUTER_RADIUS;
+
+function annularFanShape() {
+  const shape = new THREE.Shape();
+  shape.moveTo(FAN_INNER_RADIUS - FAN_MID_RADIUS, 0);
+  shape.lineTo(FAN_OUTER_RADIUS - FAN_MID_RADIUS, 0);
+  shape.absarc(-FAN_MID_RADIUS, 0, FAN_OUTER_RADIUS, 0, -FAN_SPAN, true);
+  shape.lineTo(
+    -FAN_MID_RADIUS + Math.cos(-FAN_SPAN) * FAN_INNER_RADIUS,
+    Math.sin(-FAN_SPAN) * FAN_INNER_RADIUS
+  );
+  shape.absarc(-FAN_MID_RADIUS, 0, FAN_INNER_RADIUS, -FAN_SPAN, 0, false);
+  shape.closePath();
+  return shape;
+}
+
+function addFanPanel(shape, object3d, footprint) {
+  const tabletop = new THREE.Mesh(new THREE.ExtrudeGeometry(shape, {
+    depth: 32,
+    bevelEnabled: true,
+    bevelSegments: 2,
+    bevelSize: 7,
+    bevelThickness: 5,
+    curveSegments: 28
+  }), materials.desk);
+  tabletop.rotation.x = Math.PI / 2;
+  tabletop.position.y = 745;
+  tabletop.castShadow = true;
+  tabletop.receiveShadow = true;
+  object3d.add(tabletop);
+
+  const planGeometry = new THREE.ShapeGeometry(shape, 28);
+  const fill = new THREE.Mesh(planGeometry, materials.footprint);
+  fill.rotation.x = Math.PI / 2;
+  fill.position.y = 32;
+  fill.renderOrder = 5;
+  footprint.add(fill);
+  const edge = new THREE.LineSegments(new THREE.EdgesGeometry(planGeometry), materials.footprintEdge);
+  edge.rotation.copy(fill.rotation);
+  edge.position.copy(fill.position);
+  edge.renderOrder = 6;
+  footprint.add(edge);
+}
+
+function addWorkstationScreen(x, z, yaw, object3d, footprint) {
+  addMonitor(x, z, yaw, object3d, footprint);
+}
+
+function fanPoint(radius, angle) {
+  return {
+    x: -FAN_MID_RADIUS + Math.cos(angle) * radius,
+    z: Math.sin(angle) * radius
+  };
+}
+
+function addAnnularFanTable(px, py, angle) {
+  const { object3d, footprint } = makePlanGroups(px, py, angle);
+  addFanPanel(annularFanShape(), object3d, footprint);
+
+  for (const legAngle of [-FAN_SPAN * .08, -FAN_SPAN * .92]) {
+    for (const radius of [FAN_INNER_RADIUS + 180, FAN_OUTER_RADIUS - 180]) {
+      const leg = fanPoint(radius, legAngle);
+      cylinder(30, 713, materials.metal, leg.x, 0, leg.z, object3d, 18);
+    }
+  }
+
+  const stations = [
+    { angle: -FAN_SPAN * .50, chairRadius: FAN_INNER_RADIUS - 350, screenRadius: FAN_INNER_RADIUS + 415 },
+    { angle: -FAN_SPAN * .75, chairRadius: FAN_OUTER_RADIUS + 300, screenRadius: FAN_OUTER_RADIUS - 465 },
+    { angle: -FAN_SPAN * .30, chairRadius: FAN_OUTER_RADIUS + 300, screenRadius: FAN_OUTER_RADIUS - 465 }
+  ];
+  for (const station of stations) {
+    const chair = fanPoint(station.chairRadius, station.angle);
+    const target = fanPoint(station.screenRadius, station.angle);
+    const yaw = -(station.angle + Math.PI / 2);
+    const keyboardRadius = station.screenRadius
+      + Math.sign(station.chairRadius - station.screenRadius) * 250;
+    const keyboard = fanPoint(keyboardRadius, station.angle);
+    addWorkstationScreen(target.x, target.z, yaw, object3d, footprint);
+    addKeyboard(keyboard.x, keyboard.z, yaw, object3d, footprint);
+    addWorkstationChair(
+      chair.x,
+      chair.z,
+      chairYawToward(chair.x, chair.z, target.x, target.z),
+      object3d,
+      footprint,
+      '扇形区工位'
+    );
+  }
+}
+
+function addCircularElement(px, py, diameter) {
+  const { object3d, footprint } = makePlanGroups(px, py, 0);
+  cylinder(diameter / 2, 2500, materials.screen, 0, 0, 0, object3d, 48);
+  const disc = new THREE.Mesh(new THREE.CylinderGeometry(diameter / 2, diameter / 2, 18, 48), materials.footprint);
+  disc.position.y = 32;
+  disc.renderOrder = 5;
+  footprint.add(disc);
+  const edge = new THREE.LineSegments(new THREE.EdgesGeometry(disc.geometry), materials.footprintEdge);
+  edge.position.copy(disc.position);
+  edge.renderOrder = 6;
+  footprint.add(edge);
+}
+
+// Furniture centers and angles are digitized in source-image pixels, not guessed world coordinates.
+// Both fan tables share the same 1100 mm radial seam. A 180 degree rotation
+// mirrors the second annular sector into the photographed S-shaped pair.
+addAnnularFanTable(344, 508, .326);
+addAnnularFanTable(344, 508, .326 + Math.PI);
+addCircularElement(499, 341, 1104);
+// Outer side: seven 1100 mm square desks, two open workstations per desk.
+addOpenSquareDesk(580, 388, .098);
+addOpenDeskPair(783, 393, .135, true);
+addOpenDeskPair(1017, 428, .162, true);
+addOpenDeskPair(1250, 475, .210, true);
+addCircularElement(1415, 485, 1104);
+// Updated inner side: two equally oriented rows, each made from two square desks.
+addEnclosedDeskPair(642.73, 664.68, .090);
+addEnclosedDeskPair(909.27, 697.19, .158);
+addMeetingTable(1307, 734, .238);
+addSolidWoodPrinterCabinet();
+buildWorkstationUi();
+root.dataset.workstations = String(workstations.length);
+const assignedWorkstations = workstations.filter(workstation => workstation.assignment?.name).length;
+const vacantWorkstations = workstations.filter(workstation => workstation.assignment?.status === 'vacant').length;
+const unknownWorkstations = workstations.filter(workstation => workstation.assignment?.status === 'unknown').length;
+function updateSummaryText() {
+  document.getElementById('fact-lab-summary').textContent = currentLanguage === 'en'
+    ? [
+      `${workstations.length} workstations`,
+      `${assignedWorkstations} members`,
+      `${vacantWorkstations} available`,
+      unknownWorkstations ? `${unknownWorkstations} to be confirmed` : null
+    ].filter(Boolean).join(' · ')
+    : [
+      `${workstations.length} 个工位`,
+      `${assignedWorkstations} 位成员`,
+      `${vacantWorkstations} 个空位`,
+      unknownWorkstations ? `${unknownWorkstations} 个待确认` : null
+    ].filter(Boolean).join(' · ');
+}
+updateSummaryText();
+
+const floorShape = new THREE.Shape();
+floorShape.moveTo(roomWorld[0].x, roomWorld[0].z);
+for (const p of roomWorld.slice(1)) floorShape.lineTo(p.x, p.z);
+floorShape.closePath();
+const floor = new THREE.Mesh(new THREE.ShapeGeometry(floorShape), materials.floor);
+floor.rotation.x = Math.PI / 2;
+floor.position.y = -20;
+floor.receiveShadow = true;
+floorGroup.add(floor);
+
+// A clipped, low-contrast grid belongs to the public floor itself. The
+// calibration grid remains separate and keeps its original millimetre guides.
+function clippedGridSegments(spacing, omitMajorLines = false) {
+  const segments = [];
+  const xs = roomWorld.map(point => point.x);
+  const zs = roomWorld.map(point => point.z);
+  const addClippedLine = (axis, value) => {
+    const intersections = [];
+    for (let i = 0; i < roomWorld.length; i++) {
+      const a = roomWorld[i];
+      const b = roomWorld[(i + 1) % roomWorld.length];
+      const aCoordinate = axis === 'x' ? a.x : a.z;
+      const bCoordinate = axis === 'x' ? b.x : b.z;
+      if (!((aCoordinate <= value && bCoordinate > value) || (bCoordinate <= value && aCoordinate > value))) continue;
+      const t = (value - aCoordinate) / (bCoordinate - aCoordinate);
+      intersections.push(axis === 'x'
+        ? a.z + (b.z - a.z) * t
+        : a.x + (b.x - a.x) * t);
+    }
+    intersections.sort((a, b) => a - b);
+    for (let i = 0; i + 1 < intersections.length; i += 2) {
+      segments.push(axis === 'x'
+        ? new THREE.Vector3(value, -8, intersections[i])
+        : new THREE.Vector3(intersections[i], -8, value));
+      segments.push(axis === 'x'
+        ? new THREE.Vector3(value, -8, intersections[i + 1])
+        : new THREE.Vector3(intersections[i + 1], -8, value));
+    }
+  };
+  const addAxisLines = (axis, minimum, maximum) => {
+    for (let value = Math.ceil(minimum / spacing) * spacing; value <= maximum; value += spacing) {
+      if (omitMajorLines && Math.abs(value % 1000) < .01) continue;
+      addClippedLine(axis, value);
+    }
+  };
+  addAxisLines('x', Math.min(...xs), Math.max(...xs));
+  addAxisLines('z', Math.min(...zs), Math.max(...zs));
+  return segments;
+}
+
+const publicFloorGrid = new THREE.Group();
+const makePublicGridLines = (points, opacity) => {
+  const lines = new THREE.LineSegments(
+    new THREE.BufferGeometry().setFromPoints(points),
+    new THREE.LineBasicMaterial({
+      color: 0xa8c4ce,
+      transparent: true,
+      opacity,
+      depthWrite: false
+    })
+  );
+  lines.renderOrder = 1;
+  return lines;
+};
+publicFloorGrid.add(
+  makePublicGridLines(clippedGridSegments(500, true), .05),
+  makePublicGridLines(clippedGridSegments(1000), .1)
+);
+publicFloorGrid.visible = isPublicView;
+floorGroup.add(publicFloorGrid);
+
+function wallBetween(planA, planB, material = materials.wall) {
+  const a = planToWorld(...planA);
+  const b = planToWorld(...planB);
+  const dx = b.x - a.x;
+  const dz = b.z - a.z;
+  const length = Math.hypot(dx, dz);
+  const wall = box(length, 2500, 120, material, (a.x + b.x) / 2, 0, (a.z + b.z) / 2, shell3dGroup);
+  wall.rotation.y = -Math.atan2(dz, dx);
+  if (material === materials.wall) registerCameraFadeWall(wall);
+  return wall;
+}
+
+function curvedWallBetween(planPoints, material = materials.wall, thickness = 120, baseY = 0, height = 2500) {
+  const points = planPoints.map(([px, py]) => planToWorld(px, py));
+  const half = thickness / 2;
+  const vertices = [];
+  for (let i = 0; i < points.length; i++) {
+    const prev = points[Math.max(0, i - 1)];
+    const next = points[Math.min(points.length - 1, i + 1)];
+    const tx = next.x - prev.x;
+    const tz = next.z - prev.z;
+    const length = Math.hypot(tx, tz) || 1;
+    const nx = -tz / length;
+    const nz = tx / length;
+    const left = [points[i].x + nx * half, baseY, points[i].z + nz * half];
+    const right = [points[i].x - nx * half, baseY, points[i].z - nz * half];
+    vertices.push(left[0], left[1], left[2], right[0], right[1], right[2]);
+    vertices.push(left[0], baseY + height, left[2], right[0], baseY + height, right[2]);
+  }
+  const indices = [];
+  for (let i = 0; i < points.length - 1; i++) {
+    const a = i * 4;
+    const b = (i + 1) * 4;
+    indices.push(a, b, a + 2, a + 2, b, b + 2); // outside face
+    indices.push(a + 1, a + 3, b + 1, b + 1, a + 3, b + 3); // inside face
+    indices.push(a + 2, b + 2, a + 3, a + 3, b + 2, b + 3); // top
+    indices.push(a, a + 1, b, b, a + 1, b + 1); // bottom
+  }
+  indices.push(0, 2, 1, 1, 2, 3);
+  const end = (points.length - 1) * 4;
+  indices.push(end, end + 1, end + 2, end + 1, end + 3, end + 2);
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+  geometry.setIndex(indices);
+  geometry.computeVertexNormals();
+  const wall = new THREE.Mesh(geometry, material);
+  wall.castShadow = true;
+  wall.receiveShadow = true;
+  shell3dGroup.add(wall);
+  if (material === materials.wall) registerCameraFadeWall(wall);
+  return wall;
+}
+
+const WINDOW_SILL_HEIGHT = 850;
+const WINDOW_HEAD_HEIGHT = 2200;
+const TOP_WINDOW_RANGES = [
+  [338, 445],
+  [570, 671],
+  [803, 912],
+  [1034, 1140]
+];
+
+function addCurvedWindow(planPoints) {
+  curvedWallBetween(planPoints, materials.wall, 120, 0, WINDOW_SILL_HEIGHT);
+  curvedWallBetween(planPoints, materials.wall, 120, WINDOW_HEAD_HEIGHT, 2500 - WINDOW_HEAD_HEIGHT);
+  curvedWallBetween(
+    planPoints,
+    materials.glass,
+    28,
+    WINDOW_SILL_HEIGHT,
+    WINDOW_HEAD_HEIGHT - WINDOW_SILL_HEIGHT
+  );
+  for (const endpoint of [planPoints[0], planPoints[planPoints.length - 1]]) {
+    const frame = planToWorld(...endpoint);
+    box(55, WINDOW_HEAD_HEIGHT - WINDOW_SILL_HEIGHT, 120, materials.metal, frame.x, WINDOW_SILL_HEIGHT, frame.z, shell3dGroup);
+  }
+}
+
+function addTopWallWithWindows() {
+  let wallStartX = curvedTopStart[0];
+  for (const [windowStartX, windowEndX] of TOP_WINDOW_RANGES) {
+    curvedWallBetween(planSliceBetweenX(curvedTopPlan, wallStartX, windowStartX));
+    addCurvedWindow(planSliceBetweenX(curvedTopPlan, windowStartX, windowEndX));
+    wallStartX = windowEndX;
+  }
+  curvedWallBetween(planSliceBetweenX(curvedTopPlan, wallStartX, curvedTopEnd[0]));
+}
+
+function addDoorLeaf(planHinge, planClosedEnd, inwardSwingAngle, isGlass = false) {
+  const hinge = planToWorld(...planHinge);
+  const closedEnd = planToWorld(...planClosedEnd);
+  const dx = closedEnd.x - hinge.x;
+  const dz = closedEnd.z - hinge.z;
+  const width = Math.hypot(dx, dz);
+  // Doors are normally shown closed. inwardSwingAngle records the correct
+  // opening direction for a later animated/open-state view.
+  const openFraction = 0;
+  const openAngle = Math.atan2(dz, dx) + inwardSwingAngle * openFraction;
+  const group = new THREE.Group();
+  group.position.copy(hinge);
+  group.rotation.y = -openAngle;
+  shell3dGroup.add(group);
+
+  if (isGlass) {
+    box(width - 90, 2110, 24, materials.doorGlass, width / 2, 45, 0, group);
+    box(55, 2200, 55, materials.metal, 27.5, 0, 0, group);
+    box(55, 2200, 55, materials.metal, width - 27.5, 0, 0, group);
+    box(width, 55, 55, materials.metal, width / 2, 0, 0, group);
+    box(width, 55, 55, materials.metal, width / 2, 2145, 0, group);
+  } else {
+    box(width, 2200, 45, materials.door, width / 2, 0, 0, group);
+    box(55, 2250, 75, materials.metal, 0, 0, 0, group);
+  }
+  for (const faceZ of [-52, 52]) {
+    box(36, 90, 70, materials.metal, width - 140, 1020, faceZ, group);
+  }
+}
+
+function addSingleDoor(planA, planB, swingAngle) {
+  addDoorLeaf(planA, planB, swingAngle);
+}
+
+function addDoubleDoor(planA, planB, isGlass = false) {
+  const midpoint = [(planA[0] + planB[0]) / 2, (planA[1] + planB[1]) / 2];
+  addDoorLeaf(planA, midpoint, -Math.PI / 2, isGlass);
+  addDoorLeaf(planB, midpoint, Math.PI / 2, isGlass);
+}
+
+addTopWallWithWindows();
+wallBetween(curvedTopEnd, innerRightPlan[innerRightPlan.length - 1]);
+curvedWallBetween(innerRightPlan);
+curvedWallBetween(innerWallBeforeRearDoor);
+curvedWallBetween(innerWallAfterRearDoor);
+wallBetween(backDoorLeftPlan, curvedTopStart);
+// Both doors are closed by default and swing into 2008A when opened.
+addDoubleDoor(frontDoorLeftPlan, frontDoorRightPlan, true);
+// From inside the room the handle is on the left: in plan view that is the
+// right end of this wall segment, with the hinges on the left.
+addSingleDoor(rearDoorLeftPlan, rearDoorRightPlan, -Math.PI / 2);
+
+// The doors sit in openings below continuous 250 mm wall lintels.
+curvedWallBetween(frontDoorLintelPlan, materials.wall, 120, 2250, 250);
+curvedWallBetween(planSliceBetweenX(innerMainPlan, rearDoorLeftX, rearDoorRightX), materials.wall, 120, 2250, 250);
+
+const roomLinePoints = [...roomWorld, roomWorld[0]].map(p => new THREE.Vector3(p.x, 42, p.z));
+roomOutlineGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(roomLinePoints), materials.roomEdge));
+
+const gridPoints = [];
+for (let x = 0; x <= 16000; x += 1000) {
+  gridPoints.push(new THREE.Vector3(x, 24, -600), new THREE.Vector3(x, 24, 8600));
+}
+for (let z = 0; z <= 8000; z += 1000) {
+  gridPoints.push(new THREE.Vector3(-600, 24, z), new THREE.Vector3(16600, 24, z));
+}
+gridGroup.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(gridPoints), materials.grid));
+roomOutlineGroup.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints([
+  new THREE.Vector3(0,55,0), new THREE.Vector3(1000,55,0),
+  new THREE.Vector3(0,55,0), new THREE.Vector3(0,55,1000)
+]), new THREE.LineBasicMaterial({ color: 0x57b5a7, depthTest: false })));
+
+const furnitureBatch = batchStaticMeshes(furniture3dGroup);
+const shellBatch = batchStaticMeshes(
+  shell3dGroup,
+  false,
+  object => !object.userData.cameraFadeWall
+);
+const footprintMeshBatch = batchStaticMeshes(footprintGroup, true);
+const footprintLineBatch = batchStaticLineSegments(footprintGroup);
+const chairGroups = [];
+furniture3dGroup.traverse(object => {
+  if (object.isGroup && object.children.filter(child => (
+    child.isMesh && child.material === materials.chair
+  )).length > 1) chairGroups.push(object);
+});
+const chairBatches = chairGroups.map(group => batchStaticObjects(
+  group,
+  object => object.isMesh && object.material === materials.chair,
+  (geometry, material) => new THREE.Mesh(geometry, material)
+));
+const chairBatch = chairBatches.reduce((total, batch) => ({
+  sourceCount: total.sourceCount + batch.sourceCount,
+  mergedCount: total.mergedCount + batch.mergedCount
+}), { sourceCount: 0, mergedCount: 0 });
+root.dataset.batchedSources = String(
+  furnitureBatch.sourceCount + shellBatch.sourceCount
+  + footprintMeshBatch.sourceCount + footprintLineBatch.sourceCount
+  + chairBatch.sourceCount
+);
+root.dataset.batchedDraws = String(
+  furnitureBatch.mergedCount + shellBatch.mergedCount
+  + footprintMeshBatch.mergedCount + footprintLineBatch.mergedCount
+  + chairBatch.mergedCount
+);
+renderer.shadowMap.needsUpdate = true;
+
+let renderFrameId = 0;
+let controlsInteracting = false;
+let cameraWasAdjusted = false;
+let hoveredWorkstation = null;
+let pinnedWorkstation = null;
+let selectedWorkstation = null;
+let pinnedRoleFilter = null;
+let previewRoleFilter = null;
+const roleLegend = document.querySelector('.fact-role-legend');
+const roleFilterButtons = [...roleLegend.querySelectorAll('[data-role-filter]')];
+const cameraHorizontal = new THREE.Vector3();
+const wallHorizontal = new THREE.Vector3();
+const wallWorldCenter = new THREE.Vector3();
+const workstationPointer = new THREE.Vector2();
+const workstationRaycaster = new THREE.Raycaster();
+const workstationTooltip = document.getElementById('fact-workstation-tooltip');
+const workstationIdText = document.getElementById('fact-workstation-id');
+const workstationNameText = document.getElementById('fact-workstation-name');
+const workstationEnglishText = document.getElementById('fact-workstation-english');
+const workstationRoleText = document.getElementById('fact-workstation-role');
+const workstationMetaText = document.getElementById('fact-workstation-meta');
+const workstationPhoto = document.getElementById('fact-workstation-photo');
+const workstationPhotoFallback = document.getElementById('fact-workstation-photo-fallback');
+const personPanel = document.getElementById('fact-person-panel');
+const detailPhoto = document.getElementById('fact-detail-photo');
+const detailPhotoFallback = document.getElementById('fact-detail-photo-fallback');
+const detailName = document.getElementById('fact-detail-name');
+const detailEnglish = document.getElementById('fact-detail-english');
+const detailRole = document.getElementById('fact-detail-role');
+const detailBio = document.getElementById('fact-detail-bio');
+const detailNote = document.getElementById('fact-detail-note');
+const detailSeat = document.getElementById('fact-detail-seat');
+const detailZone = document.getElementById('fact-detail-zone');
+const detailEmail = document.getElementById('fact-detail-email');
+const detailProfile = document.getElementById('fact-detail-profile');
+const detailClose = document.getElementById('fact-detail-close');
+const languageButtons = [...document.querySelectorAll('[data-language]')];
+
+function setLanguage(language) {
+  currentLanguage = language === 'zh' ? 'zh' : 'en';
+  const text = ui();
+  root.dataset.language = currentLanguage;
+  document.documentElement.lang = currentLanguage === 'en' ? 'en' : 'zh-Hans';
+  document.title = text.documentTitle;
+  root.setAttribute('aria-label', text.rootLabel);
+  workstationMarkers.setAttribute('aria-label', text.markerRegionLabel);
+  document.getElementById('fact-lab-controls').setAttribute('aria-label', text.controlsLabel);
+  document.querySelector('.fact-brand').setAttribute('aria-label', text.siteLabel);
+  document.getElementById('fact-page-title').textContent = text.pageTitle;
+  roleLegend.setAttribute('aria-label', text.roleLegendLabel);
+  roleLegend.querySelector('.legend-title').textContent = text.legendTitle;
+  document.querySelector('.fact-language-modes').setAttribute('aria-label', text.languageLabel);
+  document.querySelector('.fact-view-modes').setAttribute('aria-label', text.viewLabel);
+  personPanel.setAttribute('aria-label', text.profileLabel);
+  document.getElementById('fact-detail-kicker').textContent = text.profileKicker;
+  document.getElementById('fact-detail-seat-label').textContent = text.seat;
+  document.getElementById('fact-detail-zone-label').textContent = text.zone;
+  document.getElementById('fact-detail-email-label').textContent = text.email;
+  document.getElementById('fact-detail-profile-label').textContent = text.profile;
+  detailClose.title = text.close;
+  detailClose.setAttribute('aria-label', text.close);
+  for (const button of languageButtons) {
+    button.setAttribute('aria-pressed', String(button.dataset.language === currentLanguage));
+  }
+  for (const button of roleFilterButtons) {
+    button.querySelector('b').textContent = text.roles[button.dataset.roleFilter];
+  }
+  for (const workstation of workstations) refreshWorkstationMarker(workstation);
+  updateSummaryText();
+  if (selectedWorkstation) setSelectedWorkstation(selectedWorkstation);
+  if (hoveredWorkstation) populateWorkstationTooltip(hoveredWorkstation);
+}
+
+for (const button of languageButtons) {
+  button.addEventListener('click', () => setLanguage(button.dataset.language));
+}
+
+function showWorkstationPhoto(photoUrl, fallbackText) {
+  workstationPhotoFallback.textContent = fallbackText;
+  workstationPhotoFallback.hidden = Boolean(photoUrl);
+  workstationPhoto.hidden = !photoUrl;
+  if (photoUrl && workstationPhoto.src !== photoUrl) workstationPhoto.src = photoUrl;
+}
+
+workstationPhoto.addEventListener('error', () => {
+  workstationPhoto.hidden = true;
+  workstationPhotoFallback.hidden = false;
+});
+
+function showDetailPhoto(photoUrl, fallbackText) {
+  detailPhotoFallback.textContent = fallbackText;
+  detailPhotoFallback.hidden = Boolean(photoUrl);
+  detailPhoto.hidden = !photoUrl;
+  if (photoUrl && detailPhoto.src !== photoUrl) detailPhoto.src = photoUrl;
+}
+
+detailPhoto.addEventListener('error', () => {
+  detailPhoto.hidden = true;
+  detailPhotoFallback.hidden = false;
+});
+
+function setSelectedWorkstation(workstation) {
+  if (selectedWorkstation) {
+    selectedWorkstation.marker.dataset.selected = 'false';
+    selectedWorkstation.marker.setAttribute('aria-expanded', 'false');
+  }
+  selectedWorkstation = workstation;
+  if (!workstation) {
+    personPanel.hidden = true;
+    return;
+  }
+
+  workstation.marker.dataset.selected = 'true';
+  workstation.marker.setAttribute('aria-expanded', 'true');
+  const assignment = workstation.assignment;
+  const isVacant = assignment?.status === 'vacant';
+  const names = personNames(assignment);
+  const displayName = names.primary || localizedOccupantName(assignment);
+  const fallbackText = assignment?.name ? Array.from(assignment.name)[0] : isVacant ? '空' : workstation.id;
+
+  personPanel.dataset.status = workstationMarkerStatus(assignment);
+  detailName.textContent = displayName;
+  detailEnglish.textContent = names.secondary;
+  detailEnglish.hidden = !names.secondary;
+  detailRole.textContent = localizedRole(assignment);
+  const localizedBio = currentLanguage === 'zh' ? assignment?.bioZh || assignment?.bio : assignment?.bio;
+  detailBio.textContent = localizedBio || '';
+  detailBio.hidden = !localizedBio;
+  detailNote.textContent = localizedNote(assignment?.note);
+  detailNote.hidden = !assignment?.note;
+  detailSeat.textContent = workstation.id;
+  detailZone.textContent = localizedZone(workstation.zone);
+  detailEmail.href = assignment?.email ? `mailto:${assignment.email}` : '';
+  detailEmail.hidden = !assignment?.email;
+  detailProfile.href = assignment?.profileUrl || '';
+  detailProfile.hidden = !assignment?.profileUrl;
+  showDetailPhoto(assignment?.photoUrl, fallbackText);
+  personPanel.hidden = false;
+}
+
+function applyRoleFilter() {
+  const activeFilter = previewRoleFilter || pinnedRoleFilter;
+  roleLegend.dataset.filterActive = String(Boolean(activeFilter));
+  root.dataset.roleFilter = activeFilter || '';
+  for (const button of roleFilterButtons) {
+    const role = button.dataset.roleFilter;
+    button.setAttribute('aria-pressed', String(role === pinnedRoleFilter));
+    button.dataset.roleCurrent = String(role === activeFilter);
+  }
+  for (const workstation of workstations) {
+    if (!activeFilter) {
+      delete workstation.marker.dataset.roleMatch;
+      continue;
+    }
+    workstation.marker.dataset.roleMatch = String(workstation.marker.dataset.status === activeFilter);
+  }
+}
+
+for (const button of roleFilterButtons) {
+  const preview = () => {
+    previewRoleFilter = button.dataset.roleFilter;
+    applyRoleFilter();
+  };
+  const endPreview = () => {
+    previewRoleFilter = null;
+    applyRoleFilter();
+  };
+  button.addEventListener('pointerenter', preview);
+  button.addEventListener('pointerleave', endPreview);
+  button.addEventListener('focus', preview);
+  button.addEventListener('blur', endPreview);
+  button.addEventListener('click', () => {
+    const role = button.dataset.roleFilter;
+    pinnedRoleFilter = pinnedRoleFilter === role ? null : role;
+    previewRoleFilter = null;
+    applyRoleFilter();
+  });
+}
+
+detailClose.addEventListener('click', event => {
+  event.stopPropagation();
+  const previousSelection = selectedWorkstation;
+  setSelectedWorkstation(null);
+  previousSelection?.marker.focus();
+});
+
+document.addEventListener('keydown', event => {
+  if (event.key !== 'Escape') return;
+  if (selectedWorkstation) setSelectedWorkstation(null);
+  if (pinnedRoleFilter || previewRoleFilter) {
+    pinnedRoleFilter = null;
+    previewRoleFilter = null;
+    applyRoleFilter();
+  }
+});
+
+function positionWorkstationTooltip(event) {
+  const bounds = root.getBoundingClientRect();
+  const proposedLeft = event.clientX - bounds.left + 14;
+  const proposedTop = event.clientY - bounds.top + 14;
+  const left = Math.max(10, Math.min(proposedLeft, root.clientWidth - workstationTooltip.offsetWidth - 10));
+  const top = Math.max(10, Math.min(proposedTop, root.clientHeight - workstationTooltip.offsetHeight - 10));
+  workstationTooltip.style.left = `${left}px`;
+  workstationTooltip.style.top = `${top}px`;
+}
+
+function populateWorkstationTooltip(workstation) {
+  const assignment = workstation.assignment;
+  const names = personNames(assignment);
+  const displayName = names.primary || localizedOccupantName(assignment);
+  workstationIdText.textContent = workstation.id;
+  workstationTooltip.dataset.status = workstationMarkerStatus(assignment);
+  workstationNameText.textContent = displayName;
+  workstationEnglishText.textContent = names.secondary;
+  workstationEnglishText.hidden = !names.secondary;
+  workstationRoleText.textContent = localizedRole(assignment);
+  workstationRoleText.hidden = false;
+  workstationMetaText.textContent = [
+    localizedZone(workstation.zone),
+    localizedNote(assignment?.note)
+  ].filter(Boolean).join(' · ');
+  showWorkstationPhoto(
+    assignment?.photoUrl,
+    assignment?.name ? Array.from(assignment.name)[0] : workstation.id
+  );
+}
+
+function setHoveredWorkstation(workstation, event) {
+  if (hoveredWorkstation !== workstation) {
+    if (hoveredWorkstation) {
+      hoveredWorkstation.marker.dataset.active = 'false';
+    }
+    hoveredWorkstation = workstation;
+    workstationHighlight.visible = Boolean(workstation);
+    if (workstation) {
+      workstationHighlight.position.x = workstation.worldPosition.x;
+      workstationHighlight.position.z = workstation.worldPosition.z;
+      workstation.marker.dataset.active = 'true';
+      populateWorkstationTooltip(workstation);
+      workstationTooltip.hidden = false;
+    } else {
+      workstationTooltip.hidden = true;
+    }
+    requestRender();
+  }
+  if (workstation && event) positionWorkstationTooltip(event);
+}
+
+function workstationFromPointer(event) {
+  if (!document.getElementById('fact-toggle-workstations').checked) return null;
+  const bounds = canvas.getBoundingClientRect();
+  workstationPointer.set(
+    (event.clientX - bounds.left) / bounds.width * 2 - 1,
+    -(event.clientY - bounds.top) / bounds.height * 2 + 1
+  );
+  workstationRaycaster.setFromCamera(workstationPointer, activeCamera);
+  return workstationRaycaster.intersectObjects(workstationHitTargets, false)[0]?.object.userData.workstation || null;
+}
+
+canvas.addEventListener('pointermove', event => {
+  if (!pinnedWorkstation) setHoveredWorkstation(workstationFromPointer(event), event);
+});
+canvas.addEventListener('pointerleave', () => {
+  if (!pinnedWorkstation) setHoveredWorkstation(null);
+});
+canvas.addEventListener('click', () => {
+  if (isPublicView) setSelectedWorkstation(null);
+  pinnedWorkstation = null;
+  setHoveredWorkstation(null);
+});
+
+function updateCameraFacingWalls() {
+  const xrayEnabled = viewMode === '3d'
+    && document.getElementById('fact-toggle-wall-xray').checked
+    && document.getElementById('fact-toggle-shell').checked;
+  cameraHorizontal.set(
+    perspective.position.x - roomCenter.x,
+    0,
+    perspective.position.z - roomCenter.z
+  );
+  if (cameraHorizontal.lengthSq() > 0) cameraHorizontal.normalize();
+
+  let changed = false;
+  for (const entry of cameraFadeWalls) {
+    entry.wall.updateWorldMatrix(true, false);
+    wallWorldCenter.copy(entry.localCenter).applyMatrix4(entry.wall.matrixWorld);
+    wallHorizontal.set(
+      wallWorldCenter.x - roomCenter.x,
+      0,
+      wallWorldCenter.z - roomCenter.z
+    );
+    const alignment = wallHorizontal.lengthSq() > 0
+      ? wallHorizontal.normalize().dot(cameraHorizontal)
+      : -1;
+    const faded = xrayEnabled && alignment > .12;
+    if (faded === entry.faded) continue;
+    entry.faded = faded;
+    entry.wall.material = faded ? materials.wallFade : materials.wall;
+    entry.wall.castShadow = !faded;
+    entry.wall.receiveShadow = !faded;
+    entry.outline.visible = faded;
+    changed = true;
+  }
+  if (changed) renderer.shadowMap.needsUpdate = true;
+}
+
+function updateWorkstationMarkerPositions() {
+  const width = canvas.clientWidth;
+  const height = canvas.clientHeight;
+  for (const workstation of workstations) {
+    markerProjection.set(workstation.worldPosition.x, 1370, workstation.worldPosition.z).project(activeCamera);
+    const visible = markerProjection.z >= -1 && markerProjection.z <= 1
+      && markerProjection.x >= -1.08 && markerProjection.x <= 1.08
+      && markerProjection.y >= -1.08 && markerProjection.y <= 1.08;
+    workstation.marker.hidden = !visible;
+    if (!visible) continue;
+    workstation.marker.style.left = `${(markerProjection.x * .5 + .5) * width}px`;
+    workstation.marker.style.top = `${(-markerProjection.y * .5 + .5) * height}px`;
+  }
+}
+
+function requestRender() {
+  if (!renderFrameId) renderFrameId = requestAnimationFrame(renderFrame);
+}
+
+function renderFrame() {
+  renderFrameId = 0;
+  const moving = controls.enabled && controls.update();
+  updateCameraFacingWalls();
+  renderer.render(scene, activeCamera);
+  updateWorkstationMarkerPositions();
+  root.dataset.renderCalls = String(renderer.info.render.calls);
+  root.dataset.triangles = String(renderer.info.render.triangles);
+  if (controlsInteracting || moving) requestRender();
+}
+
+controls.addEventListener('start', () => {
+  controlsInteracting = true;
+  cameraWasAdjusted = true;
+  requestRender();
+});
+controls.addEventListener('change', requestRender);
+controls.addEventListener('end', () => {
+  controlsInteracting = false;
+  requestRender();
+});
+
+function setView(mode) {
+  viewMode = mode;
+  root.dataset.view = mode;
+  pinnedWorkstation = null;
+  setHoveredWorkstation(null);
+  const top = mode === 'top';
+  activeCamera = top ? orthographic : perspective;
+  controls.enabled = !top;
+  floorGroup.visible = isPublicView || !top;
+  furniture3dGroup.visible = (isPublicView || !top) && document.getElementById('fact-toggle-model').checked;
+  footprintGroup.visible = !isPublicView && top && document.getElementById('fact-toggle-model').checked;
+  shell3dGroup.visible = !top && document.getElementById('fact-toggle-shell').checked;
+  roomOutlineGroup.visible = document.getElementById('fact-toggle-shell').checked;
+  document.getElementById('fact-top-view').setAttribute('aria-pressed', String(top));
+  document.getElementById('fact-3d-view').setAttribute('aria-pressed', String(!top));
+  status.textContent = top
+    ? '原点：房间左上内角 (210, 260 px) · 1 px = 12.35 mm · X 向右，Y 向下'
+    : '3D 模型仍使用同一毫米坐标；拖动旋转，滚轮缩放，双击恢复视角';
+  if (!top) renderer.shadowMap.needsUpdate = true;
+  requestRender();
+}
+
+document.getElementById('fact-top-view').addEventListener('click', () => setView('top'));
+document.getElementById('fact-3d-view').addEventListener('click', () => setView('3d'));
+document.getElementById('fact-toggle-plan').addEventListener('change', e => {
+  planGroup.visible = e.target.checked;
+  requestRender();
+});
+document.getElementById('fact-toggle-grid').addEventListener('change', e => {
+  gridGroup.visible = e.target.checked;
+  requestRender();
+});
+document.getElementById('fact-toggle-shell').addEventListener('change', e => {
+  roomOutlineGroup.visible = e.target.checked;
+  shell3dGroup.visible = e.target.checked && viewMode === '3d';
+  if (viewMode === '3d') renderer.shadowMap.needsUpdate = true;
+  requestRender();
+});
+document.getElementById('fact-toggle-wall-xray').addEventListener('change', () => {
+  renderer.shadowMap.needsUpdate = true;
+  requestRender();
+});
+document.getElementById('fact-toggle-workstations').addEventListener('change', event => {
+  workstationUiGroup.visible = event.target.checked;
+  workstationMarkers.hidden = !event.target.checked;
+  if (!event.target.checked) setHoveredWorkstation(null);
+  requestRender();
+});
+document.getElementById('fact-toggle-model').addEventListener('change', e => {
+  footprintGroup.visible = e.target.checked && viewMode === 'top' && !isPublicView;
+  furniture3dGroup.visible = e.target.checked && (viewMode === '3d' || isPublicView);
+  if (viewMode === '3d') renderer.shadowMap.needsUpdate = true;
+  requestRender();
+});
+canvas.addEventListener('dblclick', () => {
+  cameraWasAdjusted = false;
+  reset3dCamera();
+  requestRender();
+});
+
+function resize() {
+  const width = root.clientWidth;
+  const height = isPublicView ? Math.max(560, window.innerHeight) : width < 640 ? 560 : 680;
+  renderer.setSize(width, height, false);
+  perspective.aspect = width / height;
+  perspective.updateProjectionMatrix();
+  if (isPublicView && !cameraWasAdjusted) reset3dCamera();
+  const roomAspect = 17000 / 9200;
+  const viewportAspect = width / height;
+  const halfHeight = viewportAspect > roomAspect ? 5100 : 17000 / viewportAspect / 2;
+  orthographic.left = -halfHeight * viewportAspect;
+  orthographic.right = halfHeight * viewportAspect;
+  orthographic.top = halfHeight;
+  orthographic.bottom = -halfHeight;
+  orthographic.position.set(roomCenter.x, 22000, roomCenter.z);
+  orthographic.lookAt(roomCenter);
+  orthographic.updateProjectionMatrix();
+  requestRender();
+}
+window.addEventListener('resize', resize);
+if (isPublicView) {
+  document.getElementById('fact-toggle-plan').checked = false;
+  document.getElementById('fact-toggle-grid').checked = false;
+  planGroup.visible = false;
+  gridGroup.visible = false;
+  publicFloorGrid.visible = true;
+  setLanguage('en');
+}
+resize();
+setView(isPublicView ? '3d' : 'top');
+</script>
+</body>
+</html>
