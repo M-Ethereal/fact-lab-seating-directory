@@ -1612,7 +1612,8 @@ function curvedWallBetween(
   capEnds = true,
   includeHorizontalFaces = true,
   horizontalMaterial = null,
-  tangentReferencePoints = null
+  tangentReferencePoints = null,
+  verticalMaterialOverride = null
 ) {
   const points = planPoints.map(([px, py]) => planToWorld(px, py));
   const reference = tangentReferencePoints?.map(([px, py]) => planToWorld(px, py)) || null;
@@ -1685,7 +1686,8 @@ function curvedWallBetween(
     geometry.setIndex(indices);
   }
   geometry.computeVertexNormals();
-  const verticalMaterial = horizontalMaterial ? materials.wallRevealVertical : material;
+  const verticalMaterial = verticalMaterialOverride
+    || (horizontalMaterial ? materials.wallRevealVertical : material);
   const wall = new THREE.Mesh(geometry, horizontalMaterial ? [verticalMaterial, horizontalMaterial] : material);
   wall.castShadow = !horizontalMaterial;
   wall.receiveShadow = !horizontalMaterial;
@@ -1729,11 +1731,11 @@ function addCurvedWindow(planPoints) {
 function addTopWallWithWindows() {
   let wallStartX = curvedTopStart[0];
   for (const [windowStartX, windowEndX] of TOP_WINDOW_RANGES) {
-    curvedWallBetween(planSliceBetweenX(curvedTopPlan, wallStartX, windowStartX), materials.wall, 120, 0, 2500, false, true, null, curvedTopPlan);
+    curvedWallBetween(planSliceBetweenX(curvedTopPlan, wallStartX, windowStartX), materials.wall, 120, 0, 2500, false, true, materials.wallReveal, curvedTopPlan, materials.wall);
     addCurvedWindow(planSliceBetweenX(curvedTopPlan, windowStartX, windowEndX));
     wallStartX = windowEndX;
   }
-  curvedWallBetween(planSliceBetweenX(curvedTopPlan, wallStartX, curvedTopEnd[0]), materials.wall, 120, 0, 2500, false, true, null, curvedTopPlan);
+  curvedWallBetween(planSliceBetweenX(curvedTopPlan, wallStartX, curvedTopEnd[0]), materials.wall, 120, 0, 2500, false, true, materials.wallReveal, curvedTopPlan, materials.wall);
 }
 
 // Each window gets its own curved image segment. Keeping the geometry inside
@@ -1850,13 +1852,14 @@ curvedWallBetween(
   2500,
   false,
   true,
-  null,
-  curvedTopPlan
+  materials.wallReveal,
+  curvedTopPlan,
+  materials.wall
 );
-curvedWallBetween(innerRightPlan, materials.wall, 120, 0, 2500, true, true, null, innerWallReferencePlan);
-curvedWallBetween(innerWallBeforeRearDoor, materials.wall, 120, 0, 2500, false, true, null, innerWallReferencePlan);
-curvedWallBetween(innerWallAfterRearDoor, materials.wall, 120, 0, 2500, false, true, null, innerWallReferencePlan);
-curvedWallBetween([backDoorLeftPlan, curvedTopStart], materials.wall, 120, 0, 2500, false);
+curvedWallBetween(innerRightPlan, materials.wall, 120, 0, 2500, true, true, materials.wallReveal, innerWallReferencePlan, materials.wall);
+curvedWallBetween(innerWallBeforeRearDoor, materials.wall, 120, 0, 2500, false, true, materials.wallReveal, innerWallReferencePlan, materials.wall);
+curvedWallBetween(innerWallAfterRearDoor, materials.wall, 120, 0, 2500, false, true, materials.wallReveal, innerWallReferencePlan, materials.wall);
+curvedWallBetween([backDoorLeftPlan, curvedTopStart], materials.wall, 120, 0, 2500, false, true, materials.wallReveal, null, materials.wall);
 // Both doors are closed by default and swing into 2008A when opened.
 addDoubleDoor(frontDoorLeftPlan, frontDoorRightPlan, true);
 // From inside the room the handle is on the left: in plan view that is the
