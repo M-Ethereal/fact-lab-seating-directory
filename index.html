@@ -1190,6 +1190,17 @@ function addMeetingDisplayLogo(object3d) {
         });
         for (const shape of SVGLoader.createShapes(path)) {
           const geometry = new THREE.ShapeGeometry(shape);
+          geometry.computeBoundingBox();
+          const bounds = geometry.boundingBox;
+          const intersectsMark = bounds
+            && bounds.max.x >= viewX
+            && bounds.min.x <= viewX + viewWidth
+            && bounds.max.y >= viewY
+            && bounds.min.y <= viewY + viewHeight;
+          if (!intersectsMark) {
+            geometry.dispose();
+            continue;
+          }
           geometry.translate(-centerX, -centerY, 0);
           const mesh = new THREE.Mesh(geometry, material);
           mesh.renderOrder = 3;
