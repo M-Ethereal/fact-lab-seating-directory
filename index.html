@@ -582,10 +582,11 @@ const materials = {
   wall: new THREE.MeshStandardMaterial({ color: 0xeeeae4, roughness: .92 }),
   // Reveals at door/window openings should read as the same plaster wall,
   // without catching the key light like a separate white cap.
-  wallReveal: new THREE.MeshBasicMaterial({
-    color: 0xc9c6bf,
-    side: THREE.DoubleSide,
-    depthWrite: true
+  wallReveal: new THREE.MeshStandardMaterial({
+    color: 0xeeeae4,
+    roughness: .92,
+    flatShading: true,
+    side: THREE.DoubleSide
   }),
   wallRevealVertical: new THREE.MeshStandardMaterial({
     color: 0xeeeae4,
