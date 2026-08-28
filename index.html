@@ -219,8 +219,8 @@
     <div class="fact-title-block">
       <a class="fact-brand" href="https://fact-lab.hkust.edu.hk/" target="_blank" rel="noreferrer" aria-label="访问 FACT Lab 官网">
         <picture>
-          <source media="(max-width: 820px)" srcset="./assets/images/fact-lab-mark.svg">
-          <img class="fact-brand-logo" src="./assets/images/fact-lab-lockup.svg" alt="HKUST FACT Lab">
+          <source media="(max-width: 820px)" srcset="./assets/images/fact-lab-mark.png">
+          <img class="fact-brand-logo" src="./assets/images/fact-lab-lockup.png" alt="HKUST FACT Lab">
         </picture>
       </a>
       <div class="fact-map-title">
@@ -1234,7 +1234,8 @@ function addMeetingDisplayLogo(object3d) {
     }
     requestRender();
   };
-  image.src = './assets/images/fact-lab-mark.svg';
+  // Use the pre-rasterized PNG for consistent mobile WebGL decoding.
+  image.src = './assets/images/fact-lab-mark.png';
 }
 
 function addMeetingTable(px, py, angle) {
