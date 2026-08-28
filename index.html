@@ -305,6 +305,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'https://esm.sh/three@0.160.0/examples/jsm/controls/OrbitControls.js';
 import { mergeGeometries } from 'https://esm.sh/three@0.160.0/examples/jsm/utils/BufferGeometryUtils.js';
+import { SVGLoader } from 'https://esm.sh/three@0.160.0/examples/jsm/loaders/SVGLoader.js';
 import { WORKSTATION_ASSIGNMENTS } from './assets/js/seating-data.js?v=20260828-2';
 
 const root = document.getElementById('fact-lab-calibrator');
@@ -1169,6 +1170,40 @@ function addEnclosedDeskPair(px, py, angle) {
   }
 }
 
+function addMeetingDisplayLogo(object3d) {
+  new SVGLoader().load('./assets/images/fact-lab-mark.svg', data => {
+    const [viewX, viewY, viewWidth, viewHeight] = [728, 0, 174, 181.9];
+    const centerX = viewX + viewWidth / 2;
+    const centerY = viewY + viewHeight / 2;
+    const makeLogoFace = (x, rotationY) => {
+      const face = new THREE.Group();
+      face.position.set(x, 870, 0);
+      face.rotation.y = rotationY;
+      face.scale.set(4.05, -4.05, 4.05);
+      for (const path of data.paths) {
+        const material = new THREE.MeshBasicMaterial({
+          color: path.color || 0xdce8f0,
+          side: THREE.DoubleSide,
+          depthWrite: false,
+          depthTest: true,
+          toneMapped: false
+        });
+        for (const shape of SVGLoader.createShapes(path)) {
+          const geometry = new THREE.ShapeGeometry(shape);
+          geometry.translate(-centerX, -centerY, 0);
+          const mesh = new THREE.Mesh(geometry, material);
+          mesh.renderOrder = 3;
+          face.add(mesh);
+        }
+      }
+      object3d.add(face);
+    };
+    makeLogoFace(1105, -Math.PI / 2);
+    makeLogoFace(1135, Math.PI / 2);
+    requestRender();
+  });
+}
+
 function addMeetingTable(px, py, angle) {
   const { object3d, footprint } = makePlanGroups(px, py, angle);
   addPanel(2400, 1100, 0, 0, object3d, footprint);
@@ -1186,23 +1221,7 @@ function addMeetingTable(px, py, angle) {
   // The display is mounted at the wall-facing short end of the table.
   box(80, 1430, 2300, materials.metal, 1180, 810, 0, object3d);
   box(24, 1310, 2180, materials.monitor, 1120, 870, 0, object3d);
-  const logoTexture = new THREE.TextureLoader().load('./assets/images/fact-lab-mark.svg', requestRender);
-  logoTexture.colorSpace = THREE.SRGBColorSpace;
-  const logoMaterial = new THREE.MeshBasicMaterial({
-    map: logoTexture,
-    transparent: true,
-    opacity: .94,
-    depthWrite: false,
-    depthTest: true,
-    side: THREE.DoubleSide
-  });
-  for (const [x, rotationY] of [[1105, -Math.PI / 2], [1135, Math.PI / 2]]) {
-    const logo = new THREE.Mesh(new THREE.PlaneGeometry(760, 760), logoMaterial);
-    logo.rotation.y = rotationY;
-    logo.position.set(x, 870, 0);
-    logo.renderOrder = 3;
-    object3d.add(logo);
-  }
+  addMeetingDisplayLogo(object3d);
   footprintBox(80, 2300, 1180, 0, footprint);
 
   for (const x of [-800, 0, 800]) {
