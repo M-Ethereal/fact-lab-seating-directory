@@ -38,7 +38,7 @@ const PROFILE_DETAILS = {
     email: 'maxpicca@qq.com'
   },
   'zihan-lin': {
-    bio: 'Her research interests include 3D vision and embodied AI, with an emphasis on real-world robotic applications.',
+    bio: 'His research interests include 3D vision and embodied AI, with an emphasis on real-world robotic applications.',
     email: 'zihan.lin@connect.ust.hk'
   },
   'qi-liu': {
@@ -104,7 +104,7 @@ const PROFILE_BIOS_ZH = {
   'ningzhi-ai': '他的研究涵盖通用计算中的预取器与分支预测器，以及面向大语言模型和具身智能的高效硬件架构。',
   'xin-fan': '她的研究聚焦互连与通信，尤其关注数据中心和 scale-up 系统。',
   'yanqin-li': '她是香港科技大学电子与计算机工程学系博士生，硕士毕业于中国科学院计算技术研究所。',
-  'zihan-lin': '她的研究兴趣包括三维视觉与具身智能，重点关注真实世界中的机器人应用。',
+  'zihan-lin': '他的研究兴趣包括三维视觉与具身智能，重点关注真实世界中的机器人应用。',
   'qi-liu': '他的研究经历包括密码与推理加速器、FPGA 后端优化，以及面向硬件的形式化验证。',
   'wenhao-sun': '他的主要研究兴趣是面向具身智能与机器人系统的体系结构支持。',
   'xiangfeng-sun': '他专注于计算机体系结构与超大规模集成电路，并关注兼具意义与实践价值的研究。',
