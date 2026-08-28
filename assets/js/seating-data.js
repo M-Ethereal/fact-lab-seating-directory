@@ -67,7 +67,7 @@ const PROFILE_DETAILS = {
     email: 'youngcius007@gmail.com'
   },
   'jiangnan-yu': {
-    bio: 'His research focuses on the relationship between hardware accelerators and high-performance computing.'
+    bio: 'Her research focuses on the relationship between hardware accelerators and high-performance computing.'
   },
   'ruiyun-zhang': {
     bio: 'Her research focuses on fault-tolerant quantum computing and quantum compiler design, especially for continuous-variable systems.',
@@ -82,7 +82,7 @@ const PROFILE_DETAILS = {
     email: 'Cathyhhh18@gmail.com'
   },
   'yi-shi': {
-    bio: 'He is an undergraduate student in integrated circuit design at Nanjing University and an incoming visiting student at HKUST.',
+    bio: 'She is an undergraduate student in integrated circuit design at Nanjing University and an incoming visiting student at HKUST.',
     email: '231180070@smail.nju.edu.cn'
   },
   'yi-sun': {
@@ -109,11 +109,11 @@ const PROFILE_BIOS_ZH = {
   'hongyi-wang': '他的研究兴趣包括软硬件协同设计和基于 FPGA 的加速器。',
   'yiran-xia': '他的研究连接计算机体系结构与人工智能，包括面向具身智能和大语言模型的专用硬件，以及 AI 辅助 EDA。',
   'zhaohui-yang': '他的研究聚焦量子计算机系统设计与容错量子计算，致力于连接算法与物理器件。',
-  'jiangnan-yu': '他的研究聚焦硬件加速器与高性能计算之间的关系。',
+  'jiangnan-yu': '她的研究聚焦硬件加速器与高性能计算之间的关系。',
   'ruiyun-zhang': '她的研究聚焦容错量子计算与量子编译器设计，尤其关注连续变量系统。',
   'ziyi-zhou': '她的研究兴趣包括大语言模型、具身智能，以及面向 AI 加速器的软硬件协同设计。',
   'shiyu-huang': '她是南京大学本科生，即将进入香港科技大学攻读博士学位。',
-  'yi-shi': '他是南京大学集成电路设计专业本科生，即将以访问学生身份来到香港科技大学。',
+  'yi-shi': '她是南京大学集成电路设计专业本科生，即将以访问学生身份来到香港科技大学。',
   'yi-sun': '他即将进入博士阶段，研究兴趣聚焦计算机体系结构与 AI for Architecture。'
 };
 
@@ -140,7 +140,12 @@ export const WORKSTATION_ASSIGNMENTS = {
   S07: officialProfile('李雪绮', 'Xueqi Li', '博士后研究员', 'xueqi-li', '/media/authors/xueqi-li_hu_9e6ca090f6773209.jpg'),
   S08: officialProfile('朱泽雨', 'Zeyu Zhu', '博士后研究员', 'zeyu-zhu', '/media/authors/zeyu-zhu_hu_3b6bd6ce77ed5539.png'),
   S09: officialProfile('夏一然', 'Yiran Xia', '博士生', 'yiran-xia', '/media/authors/yiran-xia_hu_b23fb79046a04836.jpg'),
-  S10: { name: '刘时宜' },
+  S10: {
+    name: '刘时宜',
+    englishName: 'Shiyi Liu',
+    role: '博士生',
+    photoUrl: './assets/people/shiyi-liu.jpg'
+  },
   S11: officialProfile('赵士瑞', 'Shirui Zhao', '博士后研究员', 'shirui-zhao', '/media/authors/shirui-zhao_hu_237130f613f8124d.webp', {
     markerPhotoPosition: 'center 22%'
   }),
