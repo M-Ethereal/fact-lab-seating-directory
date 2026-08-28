@@ -511,6 +511,7 @@ const windowTangent = planToWorld(...windowReferenceNext).sub(planToWorld(...win
 // It lets the sea view follow the window's front/back side without requiring
 // the camera to be inside the room polygon.
 const windowFrontNormal = new THREE.Vector3(-windowTangent.z, 0, windowTangent.x).normalize();
+const windowWallDirection = windowReferenceWorld.clone().sub(roomCenter).setY(0).normalize();
 const DEFAULT_3D_BASE_DISTANCE = 20500;
 const DEFAULT_3D_REFERENCE_ASPECT = 1.25;
 
@@ -589,16 +590,6 @@ const materials = {
     depthWrite: false,
     side: THREE.DoubleSide
   }),
-  windowReflection: new THREE.MeshBasicMaterial({
-    color: 0xffffff,
-    transparent: true,
-    opacity: .16,
-    blending: THREE.AdditiveBlending,
-    depthWrite: false,
-    depthTest: false,
-    side: THREE.DoubleSide,
-    toneMapped: false
-  }),
   desk: new THREE.MeshStandardMaterial({ color: 0xb88952, roughness: .7 }),
   metal: new THREE.MeshStandardMaterial({ color: 0x858f93, roughness: .35, metalness: .65 }),
   seat: new THREE.MeshStandardMaterial({ color: 0x2b3236, roughness: .82 }),
@@ -626,6 +617,7 @@ const materials = {
 };
 
 const cameraFadeWalls = [];
+const windowGlassPanes = [];
 const workstations = [];
 const workstationHitTargets = [];
 const workstationHitMaterial = new THREE.MeshBasicMaterial({ visible: false });
@@ -1557,13 +1549,15 @@ const TOP_WINDOW_RANGES = [
 function addCurvedWindow(planPoints) {
   curvedWallBetween(planPoints, materials.wall, 120, 0, WINDOW_SILL_HEIGHT);
   curvedWallBetween(planPoints, materials.wall, 120, WINDOW_HEAD_HEIGHT, 2500 - WINDOW_HEAD_HEIGHT);
-  curvedWallBetween(
+  const glassPaneMaterial = materials.glass.clone();
+  const glassPane = curvedWallBetween(
     planPoints,
-    materials.glass,
+    glassPaneMaterial,
     28,
     WINDOW_SILL_HEIGHT,
     WINDOW_HEAD_HEIGHT - WINDOW_SILL_HEIGHT
   );
+  windowGlassPanes.push({ mesh: glassPane, baseOpacity: glassPaneMaterial.opacity });
   for (const endpoint of [planPoints[0], planPoints[planPoints.length - 1]]) {
     const frame = planToWorld(...endpoint);
     box(55, WINDOW_HEAD_HEIGHT - WINDOW_SILL_HEIGHT, 120, materials.metal, frame.x, WINDOW_SILL_HEIGHT, frame.z, shell3dGroup);
@@ -1634,28 +1628,6 @@ function addWindowViewBackdrop() {
     backdrop.renderOrder = 0;
     windowViewGroup.add(backdrop);
 
-    // A restrained upper highlight makes the pane legible even when the
-    // environment has little contrast, without covering the exterior view.
-    const highlightOffset = -46;
-    const highlightVertices = [];
-    for (let i = 0; i < path.length; i++) {
-      const prev = path[Math.max(0, i - 1)];
-      const next = path[Math.min(path.length - 1, i + 1)];
-      const tx = next.x - prev.x;
-      const tz = next.z - prev.z;
-      const length = Math.hypot(tx, tz) || 1;
-      const outwardX = tz / length;
-      const outwardZ = -tx / length;
-      const x = path[i].x + outwardX * highlightOffset;
-      const z = path[i].z + outwardZ * highlightOffset;
-      highlightVertices.push(x, WINDOW_HEAD_HEIGHT - 125, z, x, WINDOW_HEAD_HEIGHT - 55, z);
-    }
-    const highlightGeometry = new THREE.BufferGeometry();
-    highlightGeometry.setAttribute('position', new THREE.Float32BufferAttribute(highlightVertices, 3));
-    highlightGeometry.setIndex(indices);
-    const highlight = new THREE.Mesh(highlightGeometry, materials.windowReflection);
-    highlight.renderOrder = 2;
-    windowViewGroup.add(highlight);
   };
   for (const [windowStartX, windowEndX] of TOP_WINDOW_RANGES) {
     addWindowSegment(planSliceBetweenX(curvedTopPlan, windowStartX, windowEndX));
@@ -2097,7 +2069,14 @@ function requestRender() {
 
 function updateWindowViewVisibility() {
   const cameraFromWindow = perspective.position.clone().sub(windowReferenceWorld);
-  windowViewGroup.visible = viewMode === '3d' && cameraFromWindow.dot(windowFrontNormal) > 0;
+  const xrayEnabled = viewMode === '3d'
+    && document.getElementById('fact-toggle-wall-xray').checked
+    && document.getElementById('fact-toggle-shell').checked;
+  const windowWallFaded = xrayEnabled && cameraHorizontal.dot(windowWallDirection) > .12;
+  windowViewGroup.visible = viewMode === '3d'
+    && cameraFromWindow.dot(windowFrontNormal) > 0
+    && !windowWallFaded;
+  for (const pane of windowGlassPanes) pane.mesh.material.opacity = windowWallFaded ? .04 : pane.baseOpacity;
 }
 
 function renderFrame() {
