@@ -572,14 +572,18 @@ scene.add(planGroup, gridGroup, floorGroup, shell3dGroup, windowViewGroup, roomO
 const materials = {
   floor: new THREE.MeshStandardMaterial({ color: 0x343c3f, roughness: .94 }),
   wall: new THREE.MeshStandardMaterial({ color: 0xeeeae4, roughness: .92 }),
-  // Clear architectural glazing: preserve the opening geometry while allowing
-  // the interior-facing exterior view to read through it.
+  // Lightly tinted architectural glazing: visible enough to read as a pane,
+  // while retaining the exterior view behind it.
   glass: new THREE.MeshPhysicalMaterial({
-    color: 0xd7f2f2,
-    roughness: .08,
-    transmission: .78,
+    color: 0xb9e2e4,
+    roughness: .14,
+    transmission: .52,
     transparent: true,
-    opacity: .22,
+    opacity: .34,
+    ior: 1.45,
+    thickness: 18,
+    clearcoat: .28,
+    clearcoatRoughness: .1,
     depthWrite: false,
     side: THREE.DoubleSide
   }),
