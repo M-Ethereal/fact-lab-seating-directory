@@ -1177,7 +1177,9 @@ function addMeetingDisplayLogo(object3d) {
     const centerY = viewY + viewHeight / 2;
     const makeLogoFace = (x, rotationY) => {
       const face = new THREE.Group();
-      face.position.set(x, 1587, 0);
+      // The larger wordmark changes the combined bounds, so lift the mark
+      // slightly to keep the complete logo + label centered on the display.
+      face.position.set(x, 1605, 0);
       face.rotation.y = rotationY;
       face.scale.set(2.6, -2.6, 2.6);
       for (const path of data.paths) {
@@ -1213,12 +1215,12 @@ function addMeetingDisplayLogo(object3d) {
     makeLogoFace(1135, Math.PI / 2);
 
     const labelCanvas = document.createElement('canvas');
-    labelCanvas.width = 1024;
-    labelCanvas.height = 220;
+    labelCanvas.width = 1200;
+    labelCanvas.height = 300;
     const labelContext = labelCanvas.getContext('2d');
     labelContext.clearRect(0, 0, labelCanvas.width, labelCanvas.height);
     labelContext.fillStyle = '#dce8f0';
-    labelContext.font = '700 116px Arial, sans-serif';
+    labelContext.font = '700 150px Arial, sans-serif';
     labelContext.textAlign = 'center';
     labelContext.textBaseline = 'middle';
     labelContext.fillText('FACT Lab', labelCanvas.width / 2, labelCanvas.height / 2);
@@ -1232,7 +1234,7 @@ function addMeetingDisplayLogo(object3d) {
       side: THREE.DoubleSide
     });
     for (const [x, rotationY] of [[1105, -Math.PI / 2], [1135, Math.PI / 2]]) {
-      const label = new THREE.Mesh(new THREE.PlaneGeometry(760, 125), labelMaterial);
+      const label = new THREE.Mesh(new THREE.PlaneGeometry(850, 160), labelMaterial);
       label.rotation.y = rotationY;
       label.position.set(x, 1289, 0);
       label.renderOrder = 3;
