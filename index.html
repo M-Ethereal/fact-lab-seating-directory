@@ -578,6 +578,12 @@ scene.add(planGroup, gridGroup, floorGroup, shell3dGroup, windowViewGroup, roomO
 const materials = {
   floor: new THREE.MeshStandardMaterial({ color: 0x343c3f, roughness: .94 }),
   wall: new THREE.MeshStandardMaterial({ color: 0xeeeae4, roughness: .92 }),
+  // Reveals at door/window openings should read as the same plaster wall,
+  // without catching the key light like a separate white cap.
+  wallReveal: new THREE.MeshBasicMaterial({
+    color: 0xd6d2cb,
+    side: THREE.DoubleSide
+  }),
   // Lightly tinted architectural glazing: visible enough to read as a pane,
   // while retaining the exterior view behind it.
   glass: new THREE.MeshPhysicalMaterial({
@@ -683,6 +689,7 @@ function registerCameraFadeWall(wall) {
   cameraFadeWalls.push({
     wall,
     outline,
+    baseMaterial: wall.material,
     localCenter: wall.geometry.boundingSphere.center.clone(),
     faded: false
   });
@@ -1566,7 +1573,16 @@ function wallBetween(planA, planB, material = materials.wall) {
   return wall;
 }
 
-function curvedWallBetween(planPoints, material = materials.wall, thickness = 120, baseY = 0, height = 2500, capEnds = true) {
+function curvedWallBetween(
+  planPoints,
+  material = materials.wall,
+  thickness = 120,
+  baseY = 0,
+  height = 2500,
+  capEnds = true,
+  includeHorizontalFaces = true,
+  horizontalMaterial = null
+) {
   const points = planPoints.map(([px, py]) => planToWorld(px, py));
   const half = thickness / 2;
   const vertices = [];
@@ -1589,8 +1605,10 @@ function curvedWallBetween(planPoints, material = materials.wall, thickness = 12
     const b = (i + 1) * 4;
     indices.push(a, b, a + 2, a + 2, b, b + 2); // outside face
     indices.push(a + 1, a + 3, b + 1, b + 1, a + 3, b + 3); // inside face
-    indices.push(a + 2, b + 2, a + 3, a + 3, b + 2, b + 3); // top
-    indices.push(a, a + 1, b, b, a + 1, b + 1); // bottom
+    if (includeHorizontalFaces) {
+      indices.push(a + 2, b + 2, a + 3, a + 3, b + 2, b + 3); // top
+      indices.push(a, a + 1, b, b, a + 1, b + 1); // bottom
+    }
   }
   if (capEnds) {
     indices.push(0, 2, 1, 1, 2, 3);
@@ -1599,9 +1617,30 @@ function curvedWallBetween(planPoints, material = materials.wall, thickness = 12
   }
   const geometry = new THREE.BufferGeometry();
   geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
-  geometry.setIndex(indices);
+  if (includeHorizontalFaces && horizontalMaterial) {
+    const verticalIndices = [];
+    const horizontalIndices = [];
+    for (let i = 0; i < points.length - 1; i++) {
+      const a = i * 4;
+      const b = (i + 1) * 4;
+      verticalIndices.push(a, b, a + 2, a + 2, b, b + 2);
+      verticalIndices.push(a + 1, a + 3, b + 1, b + 1, a + 3, b + 3);
+      horizontalIndices.push(a + 2, b + 2, a + 3, a + 3, b + 2, b + 3);
+      horizontalIndices.push(a, a + 1, b, b, a + 1, b + 1);
+    }
+    if (capEnds) {
+      verticalIndices.push(0, 2, 1, 1, 2, 3);
+      const end = (points.length - 1) * 4;
+      verticalIndices.push(end, end + 1, end + 2, end + 1, end + 3, end + 2);
+    }
+    geometry.setIndex([...verticalIndices, ...horizontalIndices]);
+    geometry.addGroup(0, verticalIndices.length, 0);
+    geometry.addGroup(verticalIndices.length, horizontalIndices.length, 1);
+  } else {
+    geometry.setIndex(indices);
+  }
   geometry.computeVertexNormals();
-  const wall = new THREE.Mesh(geometry, material);
+  const wall = new THREE.Mesh(geometry, horizontalMaterial ? [material, horizontalMaterial] : material);
   wall.castShadow = true;
   wall.receiveShadow = true;
   shell3dGroup.add(wall);
@@ -1619,8 +1658,8 @@ const TOP_WINDOW_RANGES = [
 ];
 
 function addCurvedWindow(planPoints) {
-  curvedWallBetween(planPoints, materials.wall, 120, 0, WINDOW_SILL_HEIGHT, false);
-  curvedWallBetween(planPoints, materials.wall, 120, WINDOW_HEAD_HEIGHT, 2500 - WINDOW_HEAD_HEIGHT, false);
+  curvedWallBetween(planPoints, materials.wall, 120, 0, WINDOW_SILL_HEIGHT, false, true, materials.wallReveal);
+  curvedWallBetween(planPoints, materials.wall, 120, WINDOW_HEAD_HEIGHT, 2500 - WINDOW_HEAD_HEIGHT, false, true, materials.wallReveal);
   const glassPaneMaterial = materials.glass.clone();
   const glassPane = curvedWallBetween(
     planPoints,
@@ -1776,8 +1815,8 @@ addDoubleDoor(frontDoorLeftPlan, frontDoorRightPlan, true);
 addSingleDoor(rearDoorLeftPlan, rearDoorRightPlan, -Math.PI / 2);
 
 // The doors sit in openings below continuous 250 mm wall lintels.
-curvedWallBetween(frontDoorLintelPlan, materials.wall, 120, 2250, 250, false);
-curvedWallBetween(planSliceBetweenX(innerMainPlan, rearDoorLeftX, rearDoorRightX), materials.wall, 120, 2250, 250, false);
+curvedWallBetween(frontDoorLintelPlan, materials.wall, 120, 2250, 250, false, true, materials.wallReveal);
+curvedWallBetween(planSliceBetweenX(innerMainPlan, rearDoorLeftX, rearDoorRightX), materials.wall, 120, 2250, 250, false, true, materials.wallReveal);
 
 const roomLinePoints = [...roomWorld, roomWorld[0]].map(p => new THREE.Vector3(p.x, 42, p.z));
 roomOutlineGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(roomLinePoints), materials.roomEdge));
@@ -2129,7 +2168,7 @@ function updateCameraFacingWalls() {
     const faded = xrayEnabled && alignment > .12;
     if (faded === entry.faded) continue;
     entry.faded = faded;
-    entry.wall.material = faded ? materials.wallFade : materials.wall;
+    entry.wall.material = faded ? materials.wallFade : entry.baseMaterial;
     entry.wall.castShadow = !faded;
     entry.wall.receiveShadow = !faded;
     entry.outline.visible = faded;
