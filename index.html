@@ -584,8 +584,20 @@ const materials = {
     thickness: 18,
     clearcoat: .28,
     clearcoatRoughness: .1,
+    specularIntensity: .72,
+    specularColor: 0xffffff,
     depthWrite: false,
     side: THREE.DoubleSide
+  }),
+  windowReflection: new THREE.MeshBasicMaterial({
+    color: 0xffffff,
+    transparent: true,
+    opacity: .16,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+    depthTest: false,
+    side: THREE.DoubleSide,
+    toneMapped: false
   }),
   desk: new THREE.MeshStandardMaterial({ color: 0xb88952, roughness: .7 }),
   metal: new THREE.MeshStandardMaterial({ color: 0x858f93, roughness: .35, metalness: .65 }),
@@ -1621,6 +1633,29 @@ function addWindowViewBackdrop() {
     const backdrop = new THREE.Mesh(geometry, material);
     backdrop.renderOrder = 0;
     windowViewGroup.add(backdrop);
+
+    // A restrained upper highlight makes the pane legible even when the
+    // environment has little contrast, without covering the exterior view.
+    const highlightOffset = -46;
+    const highlightVertices = [];
+    for (let i = 0; i < path.length; i++) {
+      const prev = path[Math.max(0, i - 1)];
+      const next = path[Math.min(path.length - 1, i + 1)];
+      const tx = next.x - prev.x;
+      const tz = next.z - prev.z;
+      const length = Math.hypot(tx, tz) || 1;
+      const outwardX = tz / length;
+      const outwardZ = -tx / length;
+      const x = path[i].x + outwardX * highlightOffset;
+      const z = path[i].z + outwardZ * highlightOffset;
+      highlightVertices.push(x, WINDOW_HEAD_HEIGHT - 125, z, x, WINDOW_HEAD_HEIGHT - 55, z);
+    }
+    const highlightGeometry = new THREE.BufferGeometry();
+    highlightGeometry.setAttribute('position', new THREE.Float32BufferAttribute(highlightVertices, 3));
+    highlightGeometry.setIndex(indices);
+    const highlight = new THREE.Mesh(highlightGeometry, materials.windowReflection);
+    highlight.renderOrder = 2;
+    windowViewGroup.add(highlight);
   };
   for (const [windowStartX, windowEndX] of TOP_WINDOW_RANGES) {
     addWindowSegment(planSliceBetweenX(curvedTopPlan, windowStartX, windowEndX));
