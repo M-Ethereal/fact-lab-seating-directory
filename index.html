@@ -587,6 +587,12 @@ const materials = {
     side: THREE.DoubleSide,
     depthWrite: false
   }),
+  wallRevealVertical: new THREE.MeshStandardMaterial({
+    color: 0xeeeae4,
+    roughness: .92,
+    flatShading: true,
+    side: THREE.DoubleSide
+  }),
   // Lightly tinted architectural glazing: visible enough to read as a pane,
   // while retaining the exterior view behind it.
   glass: new THREE.MeshPhysicalMaterial({
@@ -1676,7 +1682,8 @@ function curvedWallBetween(
     geometry.setIndex(indices);
   }
   geometry.computeVertexNormals();
-  const wall = new THREE.Mesh(geometry, horizontalMaterial ? [material, horizontalMaterial] : material);
+  const verticalMaterial = horizontalMaterial ? materials.wallRevealVertical : material;
+  const wall = new THREE.Mesh(geometry, horizontalMaterial ? [verticalMaterial, horizontalMaterial] : material);
   wall.castShadow = !horizontalMaterial;
   wall.receiveShadow = !horizontalMaterial;
   shell3dGroup.add(wall);
@@ -1694,9 +1701,8 @@ const TOP_WINDOW_RANGES = [
 ];
 
 function addCurvedWindow(planPoints) {
-  const revealPlan = planPoints.length > 2 ? [planPoints[0], planPoints[planPoints.length - 1]] : planPoints;
-  curvedWallBetween(revealPlan, materials.wall, 120, 0, WINDOW_SILL_HEIGHT, false, true, materials.wallReveal, curvedTopPlan);
-  curvedWallBetween(revealPlan, materials.wall, 120, WINDOW_HEAD_HEIGHT, 2500 - WINDOW_HEAD_HEIGHT, false, true, materials.wallReveal, curvedTopPlan);
+  curvedWallBetween(planPoints, materials.wall, 120, 0, WINDOW_SILL_HEIGHT, false, true, materials.wallReveal, curvedTopPlan);
+  curvedWallBetween(planPoints, materials.wall, 120, WINDOW_HEAD_HEIGHT, 2500 - WINDOW_HEAD_HEIGHT, false, true, materials.wallReveal, curvedTopPlan);
   const glassPaneMaterial = materials.glass.clone();
   const glassPane = curvedWallBetween(
     planPoints,
@@ -1855,10 +1861,8 @@ addDoubleDoor(frontDoorLeftPlan, frontDoorRightPlan, true);
 addSingleDoor(rearDoorLeftPlan, rearDoorRightPlan, -Math.PI / 2);
 
 // The doors sit in openings below continuous 250 mm wall lintels.
-const frontDoorRevealPlan = [frontDoorLintelPlan[0], frontDoorLintelPlan[frontDoorLintelPlan.length - 1]];
-const rearDoorRevealPlan = [rearDoorLeftPlan, rearDoorRightPlan];
-curvedWallBetween(frontDoorRevealPlan, materials.wall, 120, 2250, 250, false, true, materials.wallReveal, innerWallReferencePlan);
-curvedWallBetween(rearDoorRevealPlan, materials.wall, 120, 2250, 250, false, true, materials.wallReveal, innerWallReferencePlan);
+curvedWallBetween(frontDoorLintelPlan, materials.wall, 120, 2250, 250, false, true, materials.wallReveal, innerWallReferencePlan);
+curvedWallBetween(planSliceBetweenX(innerMainPlan, rearDoorLeftX, rearDoorRightX), materials.wall, 120, 2250, 250, false, true, materials.wallReveal, innerWallReferencePlan);
 
 const roomLinePoints = [...roomWorld, roomWorld[0]].map(p => new THREE.Vector3(p.x, 42, p.z));
 roomOutlineGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(roomLinePoints), materials.roomEdge));
@@ -2247,8 +2251,9 @@ function updateWorkstationMarkerPositions() {
   });
   visibleMarkers.forEach(({ workstation }, index) => {
     markerDepthOrder.set(workstation.id, index);
-    workstation.marker.style.zIndex = String(index + 1);
-    workstation.marker.style.setProperty('--fact-marker-depth', String(index + 1));
+    const stackingOrder = visibleMarkers.length - index;
+    workstation.marker.style.zIndex = String(stackingOrder);
+    workstation.marker.style.setProperty('--fact-marker-depth', String(stackingOrder));
   });
 }
 
