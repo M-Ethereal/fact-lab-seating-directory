@@ -149,7 +149,9 @@ export const WORKSTATION_ASSIGNMENTS = {
     englishName: 'Shiyi Liu',
     role: '博士生',
     photoUrl: './assets/people/shiyi-liu.jpg',
-    profileUrl: 'https://fact-lab.hkust.edu.hk/authors/shiyi-liu/'
+    profileUrl: 'https://fact-lab.hkust.edu.hk/authors/shiyi-liu/',
+    bio: PROFILE_DETAILS['shiyi-liu'].bio,
+    bioZh: PROFILE_BIOS_ZH['shiyi-liu']
   },
   S11: officialProfile('赵士瑞', 'Shirui Zhao', '博士后研究员', 'shirui-zhao', '/media/authors/shirui-zhao_hu_237130f613f8124d.webp', {
     markerPhotoPosition: 'center 22%'
