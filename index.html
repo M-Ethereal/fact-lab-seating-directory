@@ -1755,11 +1755,20 @@ function addDoubleDoor(planA, planB, isGlass = false) {
 
 addTopWallWithWindows();
 addWindowViewBackdrop();
-wallBetween(curvedTopEnd, innerRightPlan[innerRightPlan.length - 1]);
+// Keep the angled corner open-ended so its neighboring wall strips share a
+// continuous surface instead of exposing a bright rectangular end cap.
+curvedWallBetween(
+  [curvedTopEnd, innerRightPlan[innerRightPlan.length - 1]],
+  materials.wall,
+  120,
+  0,
+  2500,
+  false
+);
 curvedWallBetween(innerRightPlan);
 curvedWallBetween(innerWallBeforeRearDoor, materials.wall, 120, 0, 2500, false);
 curvedWallBetween(innerWallAfterRearDoor, materials.wall, 120, 0, 2500, false);
-wallBetween(backDoorLeftPlan, curvedTopStart);
+curvedWallBetween([backDoorLeftPlan, curvedTopStart], materials.wall, 120, 0, 2500, false);
 // Both doors are closed by default and swing into 2008A when opened.
 addDoubleDoor(frontDoorLeftPlan, frontDoorRightPlan, true);
 // From inside the room the handle is on the left: in plan view that is the
@@ -1781,10 +1790,12 @@ for (let z = 0; z <= 8000; z += 1000) {
   gridPoints.push(new THREE.Vector3(-600, 24, z), new THREE.Vector3(16600, 24, z));
 }
 gridGroup.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(gridPoints), materials.grid));
-roomOutlineGroup.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints([
-  new THREE.Vector3(0,55,0), new THREE.Vector3(1000,55,0),
-  new THREE.Vector3(0,55,0), new THREE.Vector3(0,55,1000)
-]), new THREE.LineBasicMaterial({ color: 0x57b5a7, depthTest: false })));
+if (!isPublicView) {
+  roomOutlineGroup.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints([
+    new THREE.Vector3(0,55,0), new THREE.Vector3(1000,55,0),
+    new THREE.Vector3(0,55,0), new THREE.Vector3(0,55,1000)
+  ]), new THREE.LineBasicMaterial({ color: 0x57b5a7, depthTest: false })));
+}
 
 const furnitureBatch = batchStaticMeshes(furniture3dGroup);
 const shellBatch = batchStaticMeshes(
