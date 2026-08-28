@@ -1177,9 +1177,9 @@ function addMeetingDisplayLogo(object3d) {
     const centerY = viewY + viewHeight / 2;
     const makeLogoFace = (x, rotationY) => {
       const face = new THREE.Group();
-      face.position.set(x, 1160, 0);
+      face.position.set(x, 932, 0);
       face.rotation.y = rotationY;
-      face.scale.set(3, -3, 3);
+      face.scale.set(2.6, -2.6, 2.6);
       for (const path of data.paths) {
         const material = new THREE.MeshBasicMaterial({
           color: path.color || 0xdce8f0,
@@ -1234,7 +1234,7 @@ function addMeetingDisplayLogo(object3d) {
     for (const [x, rotationY] of [[1105, -Math.PI / 2], [1135, Math.PI / 2]]) {
       const label = new THREE.Mesh(new THREE.PlaneGeometry(760, 125), labelMaterial);
       label.rotation.y = rotationY;
-      label.position.set(x, 890, 0);
+      label.position.set(x, 634, 0);
       label.renderOrder = 3;
       object3d.add(label);
     }
