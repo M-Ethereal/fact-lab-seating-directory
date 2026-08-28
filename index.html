@@ -511,7 +511,6 @@ const windowTangent = planToWorld(...windowReferenceNext).sub(planToWorld(...win
 // It lets the sea view follow the window's front/back side without requiring
 // the camera to be inside the room polygon.
 const windowFrontNormal = new THREE.Vector3(-windowTangent.z, 0, windowTangent.x).normalize();
-const windowWallDirection = windowReferenceWorld.clone().sub(roomCenter).setY(0).normalize();
 const DEFAULT_3D_BASE_DISTANCE = 20500;
 const DEFAULT_3D_REFERENCE_ASPECT = 1.25;
 
@@ -618,6 +617,7 @@ const materials = {
 
 const cameraFadeWalls = [];
 const windowGlassPanes = [];
+const topWindowWallPieces = [];
 const workstations = [];
 const workstationHitTargets = [];
 const workstationHitMaterial = new THREE.MeshBasicMaterial({ visible: false });
@@ -1567,11 +1567,11 @@ function addCurvedWindow(planPoints) {
 function addTopWallWithWindows() {
   let wallStartX = curvedTopStart[0];
   for (const [windowStartX, windowEndX] of TOP_WINDOW_RANGES) {
-    curvedWallBetween(planSliceBetweenX(curvedTopPlan, wallStartX, windowStartX));
+    topWindowWallPieces.push(curvedWallBetween(planSliceBetweenX(curvedTopPlan, wallStartX, windowStartX)));
     addCurvedWindow(planSliceBetweenX(curvedTopPlan, windowStartX, windowEndX));
     wallStartX = windowEndX;
   }
-  curvedWallBetween(planSliceBetweenX(curvedTopPlan, wallStartX, curvedTopEnd[0]));
+  topWindowWallPieces.push(curvedWallBetween(planSliceBetweenX(curvedTopPlan, wallStartX, curvedTopEnd[0])));
 }
 
 // Each window gets its own curved image segment. Keeping the geometry inside
@@ -2072,7 +2072,9 @@ function updateWindowViewVisibility() {
   const xrayEnabled = viewMode === '3d'
     && document.getElementById('fact-toggle-wall-xray').checked
     && document.getElementById('fact-toggle-shell').checked;
-  const windowWallFaded = xrayEnabled && cameraHorizontal.dot(windowWallDirection) > .12;
+  const windowWallFaded = xrayEnabled && topWindowWallPieces.some(wall => (
+    cameraFadeWalls.find(entry => entry.wall === wall)?.faded
+  ));
   windowViewGroup.visible = viewMode === '3d'
     && cameraFromWindow.dot(windowFrontNormal) > 0
     && !windowWallFaded;
