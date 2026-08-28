@@ -1578,9 +1578,11 @@ function addWindowViewBackdrop() {
     transparent: true,
     opacity: .96,
     depthWrite: false,
-    depthTest: false
+    depthTest: true
   });
-  const offset = -60;
+  // Keep the view just outside the glazing so the transparent pane renders in
+  // front of it from the room side instead of looking like a pasted surface.
+  const offset = 80;
   const addWindowSegment = planPoints => {
     const path = planPoints.map(([px, py]) => planToWorld(px, py));
     const planStartX = curvedTopStart[0];
@@ -1613,7 +1615,7 @@ function addWindowViewBackdrop() {
     geometry.setIndex(indices);
     geometry.computeVertexNormals();
     const backdrop = new THREE.Mesh(geometry, material);
-    backdrop.renderOrder = 1;
+    backdrop.renderOrder = 0;
     windowViewGroup.add(backdrop);
   };
   for (const [windowStartX, windowEndX] of TOP_WINDOW_RANGES) {
