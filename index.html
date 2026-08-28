@@ -498,16 +498,19 @@ const roomPlan = [
 ];
 const roomWorld = roomPlan.map(([x, y]) => planToWorld(x, y));
 const roomCenter = planToWorld(854, 575);
-const isInsideRoom = point => {
-  let inside = false;
-  for (let i = 0, j = roomWorld.length - 1; i < roomWorld.length; j = i++) {
-    const a = roomWorld[i];
-    const b = roomWorld[j];
-    const crosses = (a.z > point.z) !== (b.z > point.z);
-    if (crosses && point.x < (b.x - a.x) * (point.z - a.z) / (b.z - a.z) + a.x) inside = !inside;
-  }
-  return inside;
-};
+const windowReferencePlan = planPointAtX(
+  curvedTopPlan,
+  (curvedTopStart[0] + curvedTopEnd[0]) / 2
+);
+const windowReferenceWorld = planToWorld(...windowReferencePlan);
+const windowReferenceIndex = curvedTopPlan.findIndex(point => point[0] >= windowReferencePlan[0]);
+const windowReferencePrev = curvedTopPlan[Math.max(0, windowReferenceIndex - 1)];
+const windowReferenceNext = curvedTopPlan[Math.min(curvedTopPlan.length - 1, windowReferenceIndex + 1)];
+const windowTangent = planToWorld(...windowReferenceNext).sub(planToWorld(...windowReferencePrev));
+// The room-facing normal is the opposite of the generated wall's outward
+// normal. It lets the sea view follow the window's front/back side, even when
+// the camera is outside the room polygon.
+const windowFrontNormal = new THREE.Vector3(windowTangent.z, 0, -windowTangent.x).normalize();
 const DEFAULT_3D_BASE_DISTANCE = 20500;
 const DEFAULT_3D_REFERENCE_ASPECT = 1.25;
 
@@ -2052,7 +2055,8 @@ function requestRender() {
 }
 
 function updateWindowViewVisibility() {
-  windowViewGroup.visible = viewMode === '3d' && isInsideRoom(perspective.position);
+  const cameraFromWindow = perspective.position.clone().sub(windowReferenceWorld);
+  windowViewGroup.visible = viewMode === '3d' && cameraFromWindow.dot(windowFrontNormal) > 0;
 }
 
 function renderFrame() {
