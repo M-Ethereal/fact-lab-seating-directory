@@ -549,11 +549,12 @@ const planGroup = new THREE.Group();
 const gridGroup = new THREE.Group();
 const floorGroup = new THREE.Group();
 const shell3dGroup = new THREE.Group();
+const windowViewGroup = new THREE.Group();
 const roomOutlineGroup = new THREE.Group();
 const furniture3dGroup = new THREE.Group();
 const footprintGroup = new THREE.Group();
 const workstationUiGroup = new THREE.Group();
-scene.add(planGroup, gridGroup, floorGroup, shell3dGroup, roomOutlineGroup, furniture3dGroup, footprintGroup, workstationUiGroup);
+scene.add(planGroup, gridGroup, floorGroup, shell3dGroup, windowViewGroup, roomOutlineGroup, furniture3dGroup, footprintGroup, workstationUiGroup);
 
 const materials = {
   floor: new THREE.MeshStandardMaterial({ color: 0x343c3f, roughness: .94 }),
@@ -1540,6 +1541,57 @@ function addTopWallWithWindows() {
   curvedWallBetween(planSliceBetweenX(curvedTopPlan, wallStartX, curvedTopEnd[0]));
 }
 
+// The exterior view is a curved, interior-facing backdrop behind the windows.
+// It is not attached to the glass, so perspective changes naturally with the
+// camera; front-face culling keeps the image invisible from outside the room.
+function addWindowViewBackdrop() {
+  const texture = new THREE.TextureLoader().load('./assets/sea-view.jpg', requestRender);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.wrapS = THREE.ClampToEdgeWrapping;
+  texture.wrapT = THREE.ClampToEdgeWrapping;
+  const material = new THREE.MeshBasicMaterial({
+    map: texture,
+    side: THREE.FrontSide,
+    transparent: true,
+    opacity: .96,
+    depthWrite: false
+  });
+  const path = curvedTopPlan.map(([px, py]) => planToWorld(px, py));
+  const offset = 520;
+  const bottomY = -4600;
+  const topY = 7600;
+  const vertices = [];
+  const uvs = [];
+  for (let i = 0; i < path.length; i++) {
+    const prev = path[Math.max(0, i - 1)];
+    const next = path[Math.min(path.length - 1, i + 1)];
+    const tx = next.x - prev.x;
+    const tz = next.z - prev.z;
+    const length = Math.hypot(tx, tz) || 1;
+    const outwardX = tz / length;
+    const outwardZ = -tx / length;
+    const x = path[i].x + outwardX * offset;
+    const z = path[i].z + outwardZ * offset;
+    vertices.push(x, bottomY, z, x, topY, z);
+    const u = i / (path.length - 1);
+    uvs.push(u, 0, u, 1);
+  }
+  const indices = [];
+  for (let i = 0; i < path.length - 1; i++) {
+    const base = i * 2;
+    const next = base + 2;
+    indices.push(base, next, base + 1, base + 1, next, next + 1);
+  }
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+  geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+  geometry.setIndex(indices);
+  geometry.computeVertexNormals();
+  const backdrop = new THREE.Mesh(geometry, material);
+  backdrop.renderOrder = -2;
+  windowViewGroup.add(backdrop);
+}
+
 function addDoorLeaf(planHinge, planClosedEnd, inwardSwingAngle, isGlass = false) {
   const hinge = planToWorld(...planHinge);
   const closedEnd = planToWorld(...planClosedEnd);
@@ -1581,6 +1633,7 @@ function addDoubleDoor(planA, planB, isGlass = false) {
 }
 
 addTopWallWithWindows();
+addWindowViewBackdrop();
 wallBetween(curvedTopEnd, innerRightPlan[innerRightPlan.length - 1]);
 curvedWallBetween(innerRightPlan);
 curvedWallBetween(innerWallBeforeRearDoor);
@@ -2006,6 +2059,7 @@ function setView(mode) {
   furniture3dGroup.visible = (isPublicView || !top) && document.getElementById('fact-toggle-model').checked;
   footprintGroup.visible = !isPublicView && top && document.getElementById('fact-toggle-model').checked;
   shell3dGroup.visible = !top && document.getElementById('fact-toggle-shell').checked;
+  windowViewGroup.visible = !top;
   roomOutlineGroup.visible = document.getElementById('fact-toggle-shell').checked;
   document.getElementById('fact-top-view').setAttribute('aria-pressed', String(top));
   document.getElementById('fact-3d-view').setAttribute('aria-pressed', String(!top));
