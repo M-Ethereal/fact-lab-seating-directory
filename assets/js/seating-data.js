@@ -88,6 +88,9 @@ const PROFILE_DETAILS = {
   'yi-sun': {
     bio: 'He is an incoming Ph.D. student whose research interests focus on computer architecture and AI for architecture.',
     email: 'ecesunyi@gmail.com'
+  },
+  'shiyi-liu': {
+    bio: 'Shiyi Liu (刘时宜) is a Ph.D. student at the Hong Kong University of Science and Technology, specializing in AI-related computer architecture. His research focuses on optimizing both computational performance and energy efficiency within this rapidly evolving field. With a strong interest in both theoretical and practical aspects of computer architecture, he is dedicated to advancing the boundaries of AI technology. Beyond research, he is passionate about fostering innovation through collaboration and contributing to the broader academic and technological community.'
   }
 };
 
@@ -114,7 +117,8 @@ const PROFILE_BIOS_ZH = {
   'ziyi-zhou': '她的研究兴趣包括大语言模型、具身智能，以及面向 AI 加速器的软硬件协同设计。',
   'shiyu-huang': '她是南京大学本科生，即将进入香港科技大学攻读博士学位。',
   'yi-shi': '她是南京大学集成电路设计专业本科生，即将以访问学生身份来到香港科技大学。',
-  'yi-sun': '他即将进入博士阶段，研究兴趣聚焦计算机体系结构与 AI for Architecture。'
+  'yi-sun': '他即将进入博士阶段，研究兴趣聚焦计算机体系结构与 AI for Architecture。',
+  'shiyi-liu': '刘时宜是香港科技大学博士生，专注于与人工智能相关的计算机体系结构。他的研究重点是在这一快速发展的领域中同时优化计算性能与能效。凭借对计算机体系结构理论与实践的浓厚兴趣，他致力于拓展人工智能技术的边界。在科研之外，他也热衷于通过合作促进创新，并为更广泛的学术与技术社群作出贡献。'
 };
 
 function officialProfile(name, englishName, role, slug, photoPath, extra = {}) {
@@ -144,7 +148,8 @@ export const WORKSTATION_ASSIGNMENTS = {
     name: '刘时宜',
     englishName: 'Shiyi Liu',
     role: '博士生',
-    photoUrl: './assets/people/shiyi-liu.jpg'
+    photoUrl: './assets/people/shiyi-liu.jpg',
+    profileUrl: 'https://fact-lab.hkust.edu.hk/authors/shiyi-liu/'
   },
   S11: officialProfile('赵士瑞', 'Shirui Zhao', '博士后研究员', 'shirui-zhao', '/media/authors/shirui-zhao_hu_237130f613f8124d.webp', {
     markerPhotoPosition: 'center 22%'
