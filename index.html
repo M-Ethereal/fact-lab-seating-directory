@@ -457,6 +457,7 @@ const innerRightControls = [
 const curvedTopPlan = samplePlanSpline(curvedTopControls, 160);
 const innerMainPlan = samplePlanSpline(innerMainControls, 100);
 const innerRightPlan = samplePlanSpline(innerRightControls, 48);
+const innerWallReferencePlan = [...innerMainPlan, ...innerRightPlan];
 const curvedTopStart = curvedTopPlan[0];
 const curvedTopEnd = curvedTopPlan[curvedTopPlan.length - 1];
 const backDoorLeftPlan = [210,742];
@@ -1581,14 +1582,29 @@ function curvedWallBetween(
   height = 2500,
   capEnds = true,
   includeHorizontalFaces = true,
-  horizontalMaterial = null
+  horizontalMaterial = null,
+  tangentReferencePoints = null
 ) {
   const points = planPoints.map(([px, py]) => planToWorld(px, py));
+  const reference = tangentReferencePoints?.map(([px, py]) => planToWorld(px, py)) || null;
   const half = thickness / 2;
   const vertices = [];
   for (let i = 0; i < points.length; i++) {
-    const prev = points[Math.max(0, i - 1)];
-    const next = points[Math.min(points.length - 1, i + 1)];
+    let prev = points[Math.max(0, i - 1)];
+    let next = points[Math.min(points.length - 1, i + 1)];
+    if (reference?.length > 1) {
+      let referenceIndex = 0;
+      let referenceDistance = Infinity;
+      for (let j = 0; j < reference.length; j++) {
+        const distance = points[i].distanceToSquared(reference[j]);
+        if (distance < referenceDistance) {
+          referenceDistance = distance;
+          referenceIndex = j;
+        }
+      }
+      prev = reference[Math.max(0, referenceIndex - 1)];
+      next = reference[Math.min(reference.length - 1, referenceIndex + 1)];
+    }
     const tx = next.x - prev.x;
     const tz = next.z - prev.z;
     const length = Math.hypot(tx, tz) || 1;
@@ -1658,8 +1674,8 @@ const TOP_WINDOW_RANGES = [
 ];
 
 function addCurvedWindow(planPoints) {
-  curvedWallBetween(planPoints, materials.wall, 120, 0, WINDOW_SILL_HEIGHT, false, true, materials.wallReveal);
-  curvedWallBetween(planPoints, materials.wall, 120, WINDOW_HEAD_HEIGHT, 2500 - WINDOW_HEAD_HEIGHT, false, true, materials.wallReveal);
+  curvedWallBetween(planPoints, materials.wall, 120, 0, WINDOW_SILL_HEIGHT, false, true, materials.wallReveal, curvedTopPlan);
+  curvedWallBetween(planPoints, materials.wall, 120, WINDOW_HEAD_HEIGHT, 2500 - WINDOW_HEAD_HEIGHT, false, true, materials.wallReveal, curvedTopPlan);
   const glassPaneMaterial = materials.glass.clone();
   const glassPane = curvedWallBetween(
     planPoints,
@@ -1683,11 +1699,11 @@ function addCurvedWindow(planPoints) {
 function addTopWallWithWindows() {
   let wallStartX = curvedTopStart[0];
   for (const [windowStartX, windowEndX] of TOP_WINDOW_RANGES) {
-    curvedWallBetween(planSliceBetweenX(curvedTopPlan, wallStartX, windowStartX), materials.wall, 120, 0, 2500, false);
+    curvedWallBetween(planSliceBetweenX(curvedTopPlan, wallStartX, windowStartX), materials.wall, 120, 0, 2500, false, true, null, curvedTopPlan);
     addCurvedWindow(planSliceBetweenX(curvedTopPlan, windowStartX, windowEndX));
     wallStartX = windowEndX;
   }
-  curvedWallBetween(planSliceBetweenX(curvedTopPlan, wallStartX, curvedTopEnd[0]), materials.wall, 120, 0, 2500, false);
+  curvedWallBetween(planSliceBetweenX(curvedTopPlan, wallStartX, curvedTopEnd[0]), materials.wall, 120, 0, 2500, false, true, null, curvedTopPlan);
 }
 
 // Each window gets its own curved image segment. Keeping the geometry inside
@@ -1802,11 +1818,14 @@ curvedWallBetween(
   120,
   0,
   2500,
-  false
+  false,
+  true,
+  null,
+  curvedTopPlan
 );
-curvedWallBetween(innerRightPlan);
-curvedWallBetween(innerWallBeforeRearDoor, materials.wall, 120, 0, 2500, false);
-curvedWallBetween(innerWallAfterRearDoor, materials.wall, 120, 0, 2500, false);
+curvedWallBetween(innerRightPlan, materials.wall, 120, 0, 2500, true, true, null, innerWallReferencePlan);
+curvedWallBetween(innerWallBeforeRearDoor, materials.wall, 120, 0, 2500, false, true, null, innerWallReferencePlan);
+curvedWallBetween(innerWallAfterRearDoor, materials.wall, 120, 0, 2500, false, true, null, innerWallReferencePlan);
 curvedWallBetween([backDoorLeftPlan, curvedTopStart], materials.wall, 120, 0, 2500, false);
 // Both doors are closed by default and swing into 2008A when opened.
 addDoubleDoor(frontDoorLeftPlan, frontDoorRightPlan, true);
@@ -1815,8 +1834,8 @@ addDoubleDoor(frontDoorLeftPlan, frontDoorRightPlan, true);
 addSingleDoor(rearDoorLeftPlan, rearDoorRightPlan, -Math.PI / 2);
 
 // The doors sit in openings below continuous 250 mm wall lintels.
-curvedWallBetween(frontDoorLintelPlan, materials.wall, 120, 2250, 250, false, true, materials.wallReveal);
-curvedWallBetween(planSliceBetweenX(innerMainPlan, rearDoorLeftX, rearDoorRightX), materials.wall, 120, 2250, 250, false, true, materials.wallReveal);
+curvedWallBetween(frontDoorLintelPlan, materials.wall, 120, 2250, 250, false, true, materials.wallReveal, innerWallReferencePlan);
+curvedWallBetween(planSliceBetweenX(innerMainPlan, rearDoorLeftX, rearDoorRightX), materials.wall, 120, 2250, 250, false, true, materials.wallReveal, innerWallReferencePlan);
 
 const roomLinePoints = [...roomWorld, roomWorld[0]].map(p => new THREE.Vector3(p.x, 42, p.z));
 roomOutlineGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(roomLinePoints), materials.roomEdge));
