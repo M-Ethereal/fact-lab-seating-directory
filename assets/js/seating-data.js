@@ -90,7 +90,7 @@ const PROFILE_DETAILS = {
     email: 'ecesunyi@gmail.com'
   },
   'shiyi-liu': {
-    bio: 'Shiyi Liu (刘时宜) is a Ph.D. student at the Hong Kong University of Science and Technology specializing in AI-related computer architecture, with research focused on improving computational performance and energy efficiency.'
+    bio: 'He is a Ph.D. student at the Hong Kong University of Science and Technology specializing in AI-related computer architecture, with research focused on improving computational performance and energy efficiency.'
   }
 };
 
