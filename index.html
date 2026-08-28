@@ -617,7 +617,7 @@ const materials = {
 
 const cameraFadeWalls = [];
 const windowGlassPanes = [];
-const topWindowWallPieces = [];
+const windowBackdropMeshes = [];
 const workstations = [];
 const workstationHitTargets = [];
 const workstationHitMaterial = new THREE.MeshBasicMaterial({ visible: false });
@@ -1557,7 +1557,12 @@ function addCurvedWindow(planPoints) {
     WINDOW_SILL_HEIGHT,
     WINDOW_HEAD_HEIGHT - WINDOW_SILL_HEIGHT
   );
-  windowGlassPanes.push({ mesh: glassPane, baseOpacity: glassPaneMaterial.opacity });
+  const centerPlan = planPoints[Math.floor(planPoints.length / 2)];
+  windowGlassPanes.push({
+    mesh: glassPane,
+    baseOpacity: glassPaneMaterial.opacity,
+    center: planToWorld(...centerPlan)
+  });
   for (const endpoint of [planPoints[0], planPoints[planPoints.length - 1]]) {
     const frame = planToWorld(...endpoint);
     box(55, WINDOW_HEAD_HEIGHT - WINDOW_SILL_HEIGHT, 120, materials.metal, frame.x, WINDOW_SILL_HEIGHT, frame.z, shell3dGroup);
@@ -1567,11 +1572,11 @@ function addCurvedWindow(planPoints) {
 function addTopWallWithWindows() {
   let wallStartX = curvedTopStart[0];
   for (const [windowStartX, windowEndX] of TOP_WINDOW_RANGES) {
-    topWindowWallPieces.push(curvedWallBetween(planSliceBetweenX(curvedTopPlan, wallStartX, windowStartX)));
+    curvedWallBetween(planSliceBetweenX(curvedTopPlan, wallStartX, windowStartX));
     addCurvedWindow(planSliceBetweenX(curvedTopPlan, windowStartX, windowEndX));
     wallStartX = windowEndX;
   }
-  topWindowWallPieces.push(curvedWallBetween(planSliceBetweenX(curvedTopPlan, wallStartX, curvedTopEnd[0])));
+  curvedWallBetween(planSliceBetweenX(curvedTopPlan, wallStartX, curvedTopEnd[0]));
 }
 
 // Each window gets its own curved image segment. Keeping the geometry inside
@@ -1627,6 +1632,8 @@ function addWindowViewBackdrop() {
     const backdrop = new THREE.Mesh(geometry, material);
     backdrop.renderOrder = 0;
     windowViewGroup.add(backdrop);
+    const centerPlan = planPoints[Math.floor(planPoints.length / 2)];
+    windowBackdropMeshes.push({ mesh: backdrop, center: planToWorld(...centerPlan) });
 
   };
   for (const [windowStartX, windowEndX] of TOP_WINDOW_RANGES) {
@@ -2072,13 +2079,14 @@ function updateWindowViewVisibility() {
   const xrayEnabled = viewMode === '3d'
     && document.getElementById('fact-toggle-wall-xray').checked
     && document.getElementById('fact-toggle-shell').checked;
-  const windowWallFaded = xrayEnabled && topWindowWallPieces.some(wall => (
-    cameraFadeWalls.find(entry => entry.wall === wall)?.faded
-  ));
-  windowViewGroup.visible = viewMode === '3d'
-    && cameraFromWindow.dot(windowFrontNormal) > 0
-    && !windowWallFaded;
-  for (const pane of windowGlassPanes) pane.mesh.material.opacity = windowWallFaded ? .04 : pane.baseOpacity;
+  windowViewGroup.visible = viewMode === '3d' && cameraFromWindow.dot(windowFrontNormal) > 0;
+  for (let i = 0; i < windowGlassPanes.length; i++) {
+    const pane = windowGlassPanes[i];
+    const wallDirection = pane.center.clone().sub(roomCenter).setY(0).normalize();
+    const faded = xrayEnabled && cameraHorizontal.dot(wallDirection) > .12;
+    pane.mesh.material.opacity = faded ? .04 : pane.baseOpacity;
+    if (windowBackdropMeshes[i]) windowBackdropMeshes[i].mesh.visible = !faded;
+  }
 }
 
 function renderFrame() {
