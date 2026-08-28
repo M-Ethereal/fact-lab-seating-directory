@@ -1452,8 +1452,8 @@ function addCircularElement(px, py, diameter) {
   edge.renderOrder = 6;
   footprint.add(edge);
 
-  // In the public 2D plan, pillars use architectural hatching so they are
-  // distinct from circular furniture while retaining their exact footprint.
+  // In the public 2D plan, pillars keep a clean architectural outline so they
+  // are distinct from circular furniture without introducing a false shadow.
   const radius = diameter / 2;
   // Place the 2D annotation above the pillar's top face so it remains visible
   // in the orthographic plan while the physical cylinder stays unchanged.
@@ -1469,18 +1469,6 @@ function addCircularElement(px, py, diameter) {
   );
   outline.renderOrder = 18;
   pillarPlanGroup.add(outline);
-  const hatchPoints = [];
-  const spacing = Math.max(125, radius / 5);
-  for (let x = -radius; x <= radius; x += spacing) {
-    const half = Math.sqrt(Math.max(0, radius * radius - x * x));
-    hatchPoints.push(center.x + x - half, center.y, center.z - half, center.x + x + half, center.y, center.z + half);
-  }
-  const hatch = new THREE.LineSegments(
-    new THREE.BufferGeometry().setAttribute('position', new THREE.Float32BufferAttribute(hatchPoints, 3)),
-    new THREE.LineBasicMaterial({ color: 0x465257, transparent: true, opacity: .9, depthTest: false, depthWrite: false })
-  );
-  hatch.renderOrder = 19;
-  pillarPlanGroup.add(hatch);
 }
 
 // Furniture centers and angles are digitized in source-image pixels, not guessed world coordinates.
