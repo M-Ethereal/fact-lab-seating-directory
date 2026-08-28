@@ -1564,9 +1564,9 @@ function addTopWallWithWindows() {
   curvedWallBetween(planSliceBetweenX(curvedTopPlan, wallStartX, curvedTopEnd[0]));
 }
 
-// Each window gets its own interior-facing curved image segment. Keeping the
-// geometry inside the opening prevents the scene from reading as an exterior
-// billboard, while front-face culling hides the image from outside the room.
+// Each window gets its own curved image segment. Keeping the geometry inside
+// the opening prevents the scene from reading as an exterior billboard; the
+// group visibility is controlled by the camera's side relative to the wall.
 function addWindowViewBackdrop() {
   const texture = new THREE.TextureLoader().load('./assets/sea-view.jpg', requestRender);
   texture.colorSpace = THREE.SRGBColorSpace;
