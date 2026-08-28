@@ -166,7 +166,7 @@
     #fact-lab-calibrator[data-mode="public"] .fact-role-legend { overflow-x: auto; flex-wrap: nowrap; }
   }
   @media (max-width: 820px) {
-    #fact-lab-calibrator[data-mode="public"] .fact-brand-logo { width: 38px; height: 38px; filter: brightness(0) invert(1); -webkit-filter: brightness(0) invert(1); }
+    #fact-lab-calibrator[data-mode="public"] .fact-brand-logo { width: 38px; height: 38px; }
   }
   @media (orientation: landscape) and (max-height: 620px) {
     #fact-lab-calibrator[data-mode="public"] #fact-lab-controls { min-height: 78px; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "title actions"; gap: 5px 14px; padding: 7px 14px 7px; }
@@ -311,7 +311,6 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'https://esm.sh/three@0.160.0/examples/jsm/controls/OrbitControls.js';
 import { mergeGeometries } from 'https://esm.sh/three@0.160.0/examples/jsm/utils/BufferGeometryUtils.js';
-import { SVGLoader } from 'https://esm.sh/three@0.160.0/examples/jsm/loaders/SVGLoader.js';
 import { WORKSTATION_ASSIGNMENTS } from './assets/js/seating-data.js?v=20260828-2';
 
 const root = document.getElementById('fact-lab-calibrator');
@@ -1178,48 +1177,34 @@ function addEnclosedDeskPair(px, py, angle) {
 }
 
 function addMeetingDisplayLogo(object3d) {
-  new SVGLoader().load('./assets/images/fact-lab-mark.svg', data => {
-    const [viewX, viewY, viewWidth, viewHeight] = [728, 0, 174, 181.9];
-    const centerX = viewX + viewWidth / 2;
-    const centerY = viewY + viewHeight / 2;
-    const makeLogoFace = (x, rotationY) => {
-      const face = new THREE.Group();
-      // The larger wordmark changes the combined bounds, so lift the mark
-      // slightly to keep the complete logo + label centered on the display.
-      face.position.set(x, 1605, 0);
-      face.rotation.y = rotationY;
-      face.scale.set(2.6, -2.6, 2.6);
-      for (const path of data.paths) {
-        const material = new THREE.MeshBasicMaterial({
-          color: path.color || 0xdce8f0,
-          side: THREE.DoubleSide,
-          depthWrite: false,
-          depthTest: true,
-          toneMapped: false
-        });
-        for (const shape of SVGLoader.createShapes(path)) {
-          const geometry = new THREE.ShapeGeometry(shape);
-          geometry.computeBoundingBox();
-          const bounds = geometry.boundingBox;
-          const intersectsMark = bounds
-            && bounds.max.x >= viewX
-            && bounds.min.x <= viewX + viewWidth
-            && bounds.max.y >= viewY
-            && bounds.min.y <= viewY + viewHeight;
-          if (!intersectsMark) {
-            geometry.dispose();
-            continue;
-          }
-          geometry.translate(-centerX, -centerY, 0);
-          const mesh = new THREE.Mesh(geometry, material);
-          mesh.renderOrder = 3;
-          face.add(mesh);
-        }
-      }
-      object3d.add(face);
-    };
-    makeLogoFace(1105, -Math.PI / 2);
-    makeLogoFace(1135, Math.PI / 2);
+  const image = new Image();
+  image.decoding = 'async';
+  image.onload = () => {
+    // Rasterizing once avoids mobile WebGL SVG path/winding issues while
+    // preserving the source colors and proportions.
+    const logoCanvas = document.createElement('canvas');
+    logoCanvas.width = 512;
+    logoCanvas.height = 536;
+    const logoContext = logoCanvas.getContext('2d');
+    logoContext.clearRect(0, 0, logoCanvas.width, logoCanvas.height);
+    logoContext.drawImage(image, 0, 0, logoCanvas.width, logoCanvas.height);
+    const logoTexture = new THREE.CanvasTexture(logoCanvas);
+    logoTexture.colorSpace = THREE.SRGBColorSpace;
+    const logoMaterial = new THREE.MeshBasicMaterial({
+      map: logoTexture,
+      transparent: true,
+      depthWrite: false,
+      depthTest: true,
+      side: THREE.DoubleSide,
+      toneMapped: false
+    });
+    for (const [x, rotationY] of [[1105, -Math.PI / 2], [1135, Math.PI / 2]]) {
+      const logo = new THREE.Mesh(new THREE.PlaneGeometry(450, 473), logoMaterial);
+      logo.rotation.y = rotationY;
+      logo.position.set(x, 1605, 0);
+      logo.renderOrder = 3;
+      object3d.add(logo);
+    }
 
     const labelCanvas = document.createElement('canvas');
     labelCanvas.width = 1200;
@@ -1248,7 +1233,8 @@ function addMeetingDisplayLogo(object3d) {
       object3d.add(label);
     }
     requestRender();
-  });
+  };
+  image.src = './assets/images/fact-lab-mark.svg';
 }
 
 function addMeetingTable(px, py, angle) {
@@ -1579,7 +1565,7 @@ function wallBetween(planA, planB, material = materials.wall) {
   return wall;
 }
 
-function curvedWallBetween(planPoints, material = materials.wall, thickness = 120, baseY = 0, height = 2500) {
+function curvedWallBetween(planPoints, material = materials.wall, thickness = 120, baseY = 0, height = 2500, capEnds = true) {
   const points = planPoints.map(([px, py]) => planToWorld(px, py));
   const half = thickness / 2;
   const vertices = [];
@@ -1605,9 +1591,11 @@ function curvedWallBetween(planPoints, material = materials.wall, thickness = 12
     indices.push(a + 2, b + 2, a + 3, a + 3, b + 2, b + 3); // top
     indices.push(a, a + 1, b, b, a + 1, b + 1); // bottom
   }
-  indices.push(0, 2, 1, 1, 2, 3);
-  const end = (points.length - 1) * 4;
-  indices.push(end, end + 1, end + 2, end + 1, end + 3, end + 2);
+  if (capEnds) {
+    indices.push(0, 2, 1, 1, 2, 3);
+    const end = (points.length - 1) * 4;
+    indices.push(end, end + 1, end + 2, end + 1, end + 3, end + 2);
+  }
   const geometry = new THREE.BufferGeometry();
   geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
   geometry.setIndex(indices);
@@ -1630,8 +1618,8 @@ const TOP_WINDOW_RANGES = [
 ];
 
 function addCurvedWindow(planPoints) {
-  curvedWallBetween(planPoints, materials.wall, 120, 0, WINDOW_SILL_HEIGHT);
-  curvedWallBetween(planPoints, materials.wall, 120, WINDOW_HEAD_HEIGHT, 2500 - WINDOW_HEAD_HEIGHT);
+  curvedWallBetween(planPoints, materials.wall, 120, 0, WINDOW_SILL_HEIGHT, false);
+  curvedWallBetween(planPoints, materials.wall, 120, WINDOW_HEAD_HEIGHT, 2500 - WINDOW_HEAD_HEIGHT, false);
   const glassPaneMaterial = materials.glass.clone();
   const glassPane = curvedWallBetween(
     planPoints,
@@ -1655,11 +1643,11 @@ function addCurvedWindow(planPoints) {
 function addTopWallWithWindows() {
   let wallStartX = curvedTopStart[0];
   for (const [windowStartX, windowEndX] of TOP_WINDOW_RANGES) {
-    curvedWallBetween(planSliceBetweenX(curvedTopPlan, wallStartX, windowStartX));
+    curvedWallBetween(planSliceBetweenX(curvedTopPlan, wallStartX, windowStartX), materials.wall, 120, 0, 2500, false);
     addCurvedWindow(planSliceBetweenX(curvedTopPlan, windowStartX, windowEndX));
     wallStartX = windowEndX;
   }
-  curvedWallBetween(planSliceBetweenX(curvedTopPlan, wallStartX, curvedTopEnd[0]));
+  curvedWallBetween(planSliceBetweenX(curvedTopPlan, wallStartX, curvedTopEnd[0]), materials.wall, 120, 0, 2500, false);
 }
 
 // Each window gets its own curved image segment. Keeping the geometry inside
@@ -1768,8 +1756,8 @@ addTopWallWithWindows();
 addWindowViewBackdrop();
 wallBetween(curvedTopEnd, innerRightPlan[innerRightPlan.length - 1]);
 curvedWallBetween(innerRightPlan);
-curvedWallBetween(innerWallBeforeRearDoor);
-curvedWallBetween(innerWallAfterRearDoor);
+curvedWallBetween(innerWallBeforeRearDoor, materials.wall, 120, 0, 2500, false);
+curvedWallBetween(innerWallAfterRearDoor, materials.wall, 120, 0, 2500, false);
 wallBetween(backDoorLeftPlan, curvedTopStart);
 // Both doors are closed by default and swing into 2008A when opened.
 addDoubleDoor(frontDoorLeftPlan, frontDoorRightPlan, true);
@@ -1778,8 +1766,8 @@ addDoubleDoor(frontDoorLeftPlan, frontDoorRightPlan, true);
 addSingleDoor(rearDoorLeftPlan, rearDoorRightPlan, -Math.PI / 2);
 
 // The doors sit in openings below continuous 250 mm wall lintels.
-curvedWallBetween(frontDoorLintelPlan, materials.wall, 120, 2250, 250);
-curvedWallBetween(planSliceBetweenX(innerMainPlan, rearDoorLeftX, rearDoorRightX), materials.wall, 120, 2250, 250);
+curvedWallBetween(frontDoorLintelPlan, materials.wall, 120, 2250, 250, false);
+curvedWallBetween(planSliceBetweenX(innerMainPlan, rearDoorLeftX, rearDoorRightX), materials.wall, 120, 2250, 250, false);
 
 const roomLinePoints = [...roomWorld, roomWorld[0]].map(p => new THREE.Vector3(p.x, 42, p.z));
 roomOutlineGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(roomLinePoints), materials.roomEdge));
