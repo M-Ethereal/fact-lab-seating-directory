@@ -2220,7 +2220,9 @@ function updateWorkstationMarkerPositions() {
   const height = canvas.clientHeight;
   const visibleMarkers = [];
   for (const workstation of workstations) {
-    markerProjection.set(workstation.worldPosition.x, 1370, workstation.worldPosition.z).project(activeCamera);
+    const markerWorld = markerProjection.set(workstation.worldPosition.x, 1370, workstation.worldPosition.z);
+    const cameraSpace = markerWorld.clone().applyMatrix4(activeCamera.matrixWorldInverse);
+    markerProjection.copy(markerWorld).project(activeCamera);
     const visible = markerProjection.z >= -1 && markerProjection.z <= 1
       && markerProjection.x >= -1.08 && markerProjection.x <= 1.08
       && markerProjection.y >= -1.08 && markerProjection.y <= 1.08;
@@ -2228,17 +2230,16 @@ function updateWorkstationMarkerPositions() {
     if (!visible) continue;
     workstation.marker.style.left = `${(markerProjection.x * .5 + .5) * width}px`;
     workstation.marker.style.top = `${(-markerProjection.y * .5 + .5) * height}px`;
-    visibleMarkers.push({ workstation, depth: markerProjection.z, originalIndex: visibleMarkers.length });
+    // In camera space, larger z is farther away. Sorting by this value avoids
+    // projection non-linearity and guarantees reordering while orbiting.
+    visibleMarkers.push({ workstation, depth: cameraSpace.z, originalIndex: visibleMarkers.length });
   }
 
   // Keep markers above the canvas for reliable interaction, while ordering
-  // overlapping markers by camera depth. The epsilon and previous order avoid
-  // jitter when two seats are nearly coplanar during a drag.
+  // overlapping markers by the current camera-space depth every frame.
   visibleMarkers.sort((a, b) => {
     const depthDelta = b.depth - a.depth;
-    if (Math.abs(depthDelta) > 0.0015) return depthDelta;
-    return (markerDepthOrder.get(a.workstation.id) ?? a.originalIndex)
-      - (markerDepthOrder.get(b.workstation.id) ?? b.originalIndex);
+    return Math.abs(depthDelta) > 0.000001 ? depthDelta : a.originalIndex - b.originalIndex;
   });
   visibleMarkers.forEach(({ workstation }, index) => {
     markerDepthOrder.set(workstation.id, index);
