@@ -583,8 +583,9 @@ const materials = {
   // Reveals at door/window openings should read as the same plaster wall,
   // without catching the key light like a separate white cap.
   wallReveal: new THREE.MeshBasicMaterial({
-    color: 0xeeeae4,
-    side: THREE.DoubleSide
+    color: 0xc9c6bf,
+    side: THREE.DoubleSide,
+    depthWrite: false
   }),
   // Lightly tinted architectural glazing: visible enough to read as a pane,
   // while retaining the exterior view behind it.
@@ -1693,8 +1694,9 @@ const TOP_WINDOW_RANGES = [
 ];
 
 function addCurvedWindow(planPoints) {
-  curvedWallBetween(planPoints, materials.wall, 120, 0, WINDOW_SILL_HEIGHT, false, true, materials.wallReveal, curvedTopPlan);
-  curvedWallBetween(planPoints, materials.wall, 120, WINDOW_HEAD_HEIGHT, 2500 - WINDOW_HEAD_HEIGHT, false, true, materials.wallReveal, curvedTopPlan);
+  const revealPlan = planPoints.length > 2 ? [planPoints[0], planPoints[planPoints.length - 1]] : planPoints;
+  curvedWallBetween(revealPlan, materials.wall, 120, 0, WINDOW_SILL_HEIGHT, false, true, materials.wallReveal, curvedTopPlan);
+  curvedWallBetween(revealPlan, materials.wall, 120, WINDOW_HEAD_HEIGHT, 2500 - WINDOW_HEAD_HEIGHT, false, true, materials.wallReveal, curvedTopPlan);
   const glassPaneMaterial = materials.glass.clone();
   const glassPane = curvedWallBetween(
     planPoints,
@@ -1853,8 +1855,10 @@ addDoubleDoor(frontDoorLeftPlan, frontDoorRightPlan, true);
 addSingleDoor(rearDoorLeftPlan, rearDoorRightPlan, -Math.PI / 2);
 
 // The doors sit in openings below continuous 250 mm wall lintels.
-curvedWallBetween(frontDoorLintelPlan, materials.wall, 120, 2250, 250, false, true, materials.wallReveal, innerWallReferencePlan);
-curvedWallBetween(planSliceBetweenX(innerMainPlan, rearDoorLeftX, rearDoorRightX), materials.wall, 120, 2250, 250, false, true, materials.wallReveal, innerWallReferencePlan);
+const frontDoorRevealPlan = [frontDoorLintelPlan[0], frontDoorLintelPlan[frontDoorLintelPlan.length - 1]];
+const rearDoorRevealPlan = [rearDoorLeftPlan, rearDoorRightPlan];
+curvedWallBetween(frontDoorRevealPlan, materials.wall, 120, 2250, 250, false, true, materials.wallReveal, innerWallReferencePlan);
+curvedWallBetween(rearDoorRevealPlan, materials.wall, 120, 2250, 250, false, true, materials.wallReveal, innerWallReferencePlan);
 
 const roomLinePoints = [...roomWorld, roomWorld[0]].map(p => new THREE.Vector3(p.x, 42, p.z));
 roomOutlineGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(roomLinePoints), materials.roomEdge));
