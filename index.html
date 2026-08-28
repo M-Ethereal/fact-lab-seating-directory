@@ -61,11 +61,11 @@
   #fact-workstation-markers { position: absolute; inset: 0; z-index: 2; overflow: hidden; pointer-events: none; }
   .fact-workstation-marker { position: absolute; z-index: var(--fact-marker-depth, 1); display: grid; justify-items: center; width: 68px; height: 64px; padding: 0; border: 0; background: transparent; color: #f4f7f7; font: inherit; pointer-events: auto; cursor: pointer; transform: translate(-50%, -50%); transform-origin: center; transition: filter 160ms ease, opacity 160ms ease, transform 160ms ease; }
   .fact-workstation-marker[hidden] { display: none; }
-  .fact-workstation-marker:hover, .fact-workstation-marker[data-active="true"] { z-index: 100; filter: drop-shadow(0 4px 7px rgba(0,0,0,.42)); transform: translate(-50%, -50%) scale(1.12); }
+  .fact-workstation-marker:hover, .fact-workstation-marker[data-active="true"] { filter: drop-shadow(0 4px 7px rgba(0,0,0,.42)); transform: translate(-50%, -50%) scale(1.12); }
   .fact-workstation-marker[data-selected="true"] .fact-marker-photo { box-shadow: 0 0 0 3px rgba(245,248,251,.95), 0 0 0 6px color-mix(in srgb, var(--role-color, #35ad9b) 72%, transparent); }
   .fact-workstation-marker[data-role-match="false"] { opacity: .18; filter: grayscale(.75) saturate(.5); transform: translate(-50%, -50%) scale(.9); }
-  .fact-workstation-marker[data-role-match="true"] { z-index: 90; filter: drop-shadow(0 0 9px color-mix(in srgb, var(--role-color, #35ad9b) 78%, transparent)); transform: translate(-50%, -50%) scale(1.14); }
-  .fact-workstation-marker[data-selected="true"][data-role-match="false"] { z-index: 95; opacity: .72; filter: none; transform: translate(-50%, -50%) scale(1.06); }
+  .fact-workstation-marker[data-role-match="true"] { filter: drop-shadow(0 0 9px color-mix(in srgb, var(--role-color, #35ad9b) 78%, transparent)); transform: translate(-50%, -50%) scale(1.14); }
+  .fact-workstation-marker[data-selected="true"][data-role-match="false"] { opacity: .72; filter: none; transform: translate(-50%, -50%) scale(1.06); }
   .fact-workstation-marker[data-role-match="true"]:hover,
   .fact-workstation-marker[data-role-match="true"][data-active="true"] { transform: translate(-50%, -50%) scale(1.22); }
   .fact-workstation-marker:focus { outline: none; }
@@ -571,10 +571,11 @@ const floorGroup = new THREE.Group();
 const shell3dGroup = new THREE.Group();
 const windowViewGroup = new THREE.Group();
 const roomOutlineGroup = new THREE.Group();
+const pillarPlanGroup = new THREE.Group();
 const furniture3dGroup = new THREE.Group();
 const footprintGroup = new THREE.Group();
 const workstationUiGroup = new THREE.Group();
-scene.add(planGroup, gridGroup, floorGroup, shell3dGroup, windowViewGroup, roomOutlineGroup, furniture3dGroup, footprintGroup, workstationUiGroup);
+scene.add(planGroup, gridGroup, floorGroup, shell3dGroup, windowViewGroup, roomOutlineGroup, pillarPlanGroup, furniture3dGroup, footprintGroup, workstationUiGroup);
 
 const materials = {
   floor: new THREE.MeshStandardMaterial({ color: 0x343c3f, roughness: .94 }),
@@ -582,7 +583,7 @@ const materials = {
   // Reveals at door/window openings should read as the same plaster wall,
   // without catching the key light like a separate white cap.
   wallReveal: new THREE.MeshBasicMaterial({
-    color: 0xd6d2cb,
+    color: 0xeeeae4,
     side: THREE.DoubleSide
   }),
   // Lightly tinted architectural glazing: visible enough to read as a pane,
@@ -1003,7 +1004,7 @@ function refreshWorkstationMarker(workstation, marker = workstation.marker) {
   const occupant = localizedOccupantName(assignment);
   const accessibleName = names.secondary ? `${names.primary} (${names.secondary})` : names.primary || occupant;
   marker.setAttribute('aria-label', `${workstation.id} ${accessibleName} · ${localizedZone(workstation.zone)}`);
-  workstation.markerNameElement.textContent = assignment?.name || occupant;
+  workstation.markerNameElement.textContent = names.primary || occupant;
   if (assignment?.status === 'vacant') workstation.markerFallbackElement.textContent = currentLanguage === 'en' ? '—' : '空';
 }
 
@@ -1450,6 +1451,36 @@ function addCircularElement(px, py, diameter) {
   edge.position.copy(disc.position);
   edge.renderOrder = 6;
   footprint.add(edge);
+
+  // In the public 2D plan, pillars use architectural hatching so they are
+  // distinct from circular furniture while retaining their exact footprint.
+  const radius = diameter / 2;
+  // Place the 2D annotation above the pillar's top face so it remains visible
+  // in the orthographic plan while the physical cylinder stays unchanged.
+  const center = planToWorld(px, py, 2510);
+  const outlinePoints = [];
+  for (let i = 0; i < 48; i++) {
+    const angle = (i / 48) * Math.PI * 2;
+    outlinePoints.push(center.x + Math.cos(angle) * radius, center.y, center.z + Math.sin(angle) * radius);
+  }
+  const outline = new THREE.LineLoop(
+    new THREE.BufferGeometry().setAttribute('position', new THREE.Float32BufferAttribute(outlinePoints, 3)),
+    new THREE.LineBasicMaterial({ color: 0x465257, transparent: true, opacity: .95, depthTest: false, depthWrite: false })
+  );
+  outline.renderOrder = 18;
+  pillarPlanGroup.add(outline);
+  const hatchPoints = [];
+  const spacing = Math.max(125, radius / 5);
+  for (let x = -radius; x <= radius; x += spacing) {
+    const half = Math.sqrt(Math.max(0, radius * radius - x * x));
+    hatchPoints.push(center.x + x - half, center.y, center.z - half, center.x + x + half, center.y, center.z + half);
+  }
+  const hatch = new THREE.LineSegments(
+    new THREE.BufferGeometry().setAttribute('position', new THREE.Float32BufferAttribute(hatchPoints, 3)),
+    new THREE.LineBasicMaterial({ color: 0x465257, transparent: true, opacity: .9, depthTest: false, depthWrite: false })
+  );
+  hatch.renderOrder = 19;
+  pillarPlanGroup.add(hatch);
 }
 
 // Furniture centers and angles are digitized in source-image pixels, not guessed world coordinates.
@@ -1657,8 +1688,8 @@ function curvedWallBetween(
   }
   geometry.computeVertexNormals();
   const wall = new THREE.Mesh(geometry, horizontalMaterial ? [material, horizontalMaterial] : material);
-  wall.castShadow = true;
-  wall.receiveShadow = true;
+  wall.castShadow = !horizontalMaterial;
+  wall.receiveShadow = !horizontalMaterial;
   shell3dGroup.add(wall);
   if (material === materials.wall) registerCameraFadeWall(wall);
   return wall;
@@ -2223,6 +2254,7 @@ function updateWorkstationMarkerPositions() {
   });
   visibleMarkers.forEach(({ workstation }, index) => {
     markerDepthOrder.set(workstation.id, index);
+    workstation.marker.style.zIndex = String(index + 1);
     workstation.marker.style.setProperty('--fact-marker-depth', String(index + 1));
   });
 }
@@ -2281,6 +2313,7 @@ function setView(mode) {
   furniture3dGroup.visible = (isPublicView || !top) && document.getElementById('fact-toggle-model').checked;
   footprintGroup.visible = !isPublicView && top && document.getElementById('fact-toggle-model').checked;
   shell3dGroup.visible = !top && document.getElementById('fact-toggle-shell').checked;
+  pillarPlanGroup.visible = top;
   updateWindowViewVisibility();
   roomOutlineGroup.visible = document.getElementById('fact-toggle-shell').checked;
   document.getElementById('fact-top-view').setAttribute('aria-pressed', String(top));
