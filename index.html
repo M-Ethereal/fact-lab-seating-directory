@@ -507,10 +507,10 @@ const windowReferenceIndex = curvedTopPlan.findIndex(point => point[0] >= window
 const windowReferencePrev = curvedTopPlan[Math.max(0, windowReferenceIndex - 1)];
 const windowReferenceNext = curvedTopPlan[Math.min(curvedTopPlan.length - 1, windowReferenceIndex + 1)];
 const windowTangent = planToWorld(...windowReferenceNext).sub(planToWorld(...windowReferencePrev));
-// The room-facing normal is the opposite of the generated wall's outward
-// normal. It lets the sea view follow the window's front/back side, even when
-// the camera is outside the room polygon.
-const windowFrontNormal = new THREE.Vector3(windowTangent.z, 0, -windowTangent.x).normalize();
+// The room-facing normal follows the actual interior side of the curved wall.
+// It lets the sea view follow the window's front/back side without requiring
+// the camera to be inside the room polygon.
+const windowFrontNormal = new THREE.Vector3(-windowTangent.z, 0, windowTangent.x).normalize();
 const DEFAULT_3D_BASE_DISTANCE = 20500;
 const DEFAULT_3D_REFERENCE_ASPECT = 1.25;
 
