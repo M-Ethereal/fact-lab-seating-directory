@@ -1186,6 +1186,23 @@ function addMeetingTable(px, py, angle) {
   // The display is mounted at the wall-facing short end of the table.
   box(80, 1430, 2300, materials.metal, 1180, 810, 0, object3d);
   box(24, 1310, 2180, materials.monitor, 1120, 870, 0, object3d);
+  const logoTexture = new THREE.TextureLoader().load('./assets/images/fact-lab-mark.svg', requestRender);
+  logoTexture.colorSpace = THREE.SRGBColorSpace;
+  const logo = new THREE.Mesh(
+    new THREE.PlaneGeometry(760, 760),
+    new THREE.MeshBasicMaterial({
+      map: logoTexture,
+      transparent: true,
+      opacity: .94,
+      depthWrite: false,
+      depthTest: true,
+      side: THREE.DoubleSide
+    })
+  );
+  logo.rotation.y = -Math.PI / 2;
+  logo.position.set(1105, 870, 0);
+  logo.renderOrder = 3;
+  object3d.add(logo);
   footprintBox(80, 2300, 1180, 0, footprint);
 
   for (const x of [-800, 0, 800]) {
