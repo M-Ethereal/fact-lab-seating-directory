@@ -91,6 +91,10 @@ const PROFILE_DETAILS = {
   },
   'shiyi-liu': {
     bio: 'He is a Ph.D. student at the Hong Kong University of Science and Technology specializing in AI-related computer architecture, with research focused on improving computational performance and energy efficiency.'
+  },
+  'xinyao-wang': {
+    bio: 'Her research interests include accelerators for cryptography and embodied intelligence, compute-in-memory architectures, and computer architecture.',
+    email: 'wangbalina@gmail.com'
   }
 };
 
@@ -118,7 +122,8 @@ const PROFILE_BIOS_ZH = {
   'shiyu-huang': '她是南京大学本科生，即将进入香港科技大学攻读博士学位。',
   'yi-shi': '她是南京大学集成电路设计专业本科生，即将以访问学生身份来到香港科技大学。',
   'yi-sun': '他即将进入博士阶段，研究兴趣聚焦计算机体系结构与 AI for Architecture。',
-  'shiyi-liu': '刘时宜是香港科技大学博士生，专注于与人工智能相关的计算机体系结构，研究重点是提升计算性能与能效。'
+  'shiyi-liu': '刘时宜是香港科技大学博士生，专注于与人工智能相关的计算机体系结构，研究重点是提升计算性能与能效。',
+  'xinyao-wang': '她的研究兴趣包括面向密码学与具身智能的加速器、存内计算架构和计算机体系结构。'
 };
 
 function officialProfile(name, englishName, role, slug, photoPath, extra = {}) {
@@ -170,7 +175,7 @@ export const WORKSTATION_ASSIGNMENTS = {
   S23: officialProfile('艾宁智', 'Ningzhi Ai', '博士生', 'ningzhi-ai', '/media/authors/ningzhi-ai_hu_664bf51fa7a3dcfa.jpeg'),
   S24: officialProfile('黄诗宇', 'Shiyu Huang', 'Incoming Student', 'shiyu-huang', '/media/authors/shiyu-huang_hu_76af7003bcfa3558.jpg'),
   S25: officialProfile('周子易', 'Ziyi Zhou', '博士生', 'ziyi-zhou', '/media/authors/ziyi-zhou_hu_7e91a357af57de51.jpg'),
-  S26: { status: 'vacant' },
+  S26: officialProfile('王歆窈', 'Xinyao Wang', 'Incoming Student', 'xinyao-wang', '/media/authors/xinyao-wang_hu_218d77765f4ff353.webp'),
   S27: officialProfile('孙文昊', 'Wenhao Sun', '博士生', 'wenhao-sun', '/media/authors/wenhao-sun_hu_a22b2dc81c32c914.jpg'),
   S28: { status: 'vacant' }
 };
