@@ -142,7 +142,7 @@ function officialProfile(name, englishName, role, slug, photoPath, extra = {}) {
 export const WORKSTATION_ASSIGNMENTS = {
   S01: officialProfile('王鸿懿', 'Hongyi Wang', '博士生', 'hongyi-wang', '/media/authors/hongyi-wang_hu_15b8f62c25a5b942.jpeg'),
   S02: officialProfile('孙祥丰', 'Xiangfeng Sun', '博士生', 'xiangfeng-sun', '/media/authors/xiangfeng-sun_hu_8bc7fd0748731dff.jpg'),
-  S03: { status: 'vacant' },
+  S03: officialProfile('王歆窈', 'Xinyao Wang', 'Incoming Student', 'xinyao-wang', '/media/authors/xinyao-wang_hu_218d77765f4ff353.webp'),
   S04: officialProfile('杨朝辉', 'Zhaohui Yang', '博士生', 'zhaohui-yang', '/media/authors/zhaohui-yang_hu_7fdaf2d75dd132dd.jpg'),
   S05: officialProfile('刘奇', 'Qi Liu', '博士生', 'qi-liu', '/media/authors/qi-liu_hu_775f1b971bab202c.jpg'),
   S06: officialProfile('张瑞芸', 'Ruiyun Zhang', '博士生', 'ruiyun-zhang', '/media/authors/ruiyun-zhang_hu_b3fa0e352226dc2a.jpg'),
@@ -175,7 +175,7 @@ export const WORKSTATION_ASSIGNMENTS = {
   S23: officialProfile('艾宁智', 'Ningzhi Ai', '博士生', 'ningzhi-ai', '/media/authors/ningzhi-ai_hu_664bf51fa7a3dcfa.jpeg'),
   S24: officialProfile('黄诗宇', 'Shiyu Huang', 'Incoming Student', 'shiyu-huang', '/media/authors/shiyu-huang_hu_76af7003bcfa3558.jpg'),
   S25: officialProfile('周子易', 'Ziyi Zhou', '博士生', 'ziyi-zhou', '/media/authors/ziyi-zhou_hu_7e91a357af57de51.jpg'),
-  S26: officialProfile('王歆窈', 'Xinyao Wang', 'Incoming Student', 'xinyao-wang', '/media/authors/xinyao-wang_hu_218d77765f4ff353.webp'),
+  S26: { status: 'vacant' },
   S27: officialProfile('孙文昊', 'Wenhao Sun', '博士生', 'wenhao-sun', '/media/authors/wenhao-sun_hu_a22b2dc81c32c914.jpg'),
   S28: { status: 'vacant' }
 };
